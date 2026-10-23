@@ -9,7 +9,7 @@ Verified in this repo's Grafana dashboards (spanmetrics-dashboard.json):
   - SPAN_CALLS_METRIC = traces_span_metrics_calls_total
   - SPAN_DURATION_METRIC = traces_span_metrics_duration_milliseconds_bucket
 
-Rule #6 enforcement: Never read flagd state, flag-service logs, or feature_flag metrics.
+Fair play: flag-mirroring telemetry (flag service, flag spans/metrics/logs) is filtered out via fairplay.py.
 """
 import json
 import os
@@ -22,17 +22,19 @@ from pathlib import Path
 
 import requests
 
+import fairplay
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 PROM = os.environ.get("PROM_URL", "http://localhost:9090").rstrip("/")
 CALLS = os.environ.get("SPAN_CALLS_METRIC", "traces_span_metrics_calls_total")
 DUR = os.environ.get("SPAN_DURATION_METRIC", "traces_span_metrics_duration_milliseconds_bucket")
 DEMO_DIR = Path(os.environ.get("DEMO_DIR", str(REPO_ROOT))).expanduser().resolve()
 COMPOSE = ["docker", "compose"] + shlex.split(os.environ.get("COMPOSE_ARGS", ""))
-BLOCKED_SERVICES = {"flagd", "flagd-ui"}
-BLOCKED_METRIC_SUBSTRINGS = ("flagd", "feature_flag")
+BLOCKED_SERVICES = fairplay.BLOCKED_SERVICES
+SERVICE_RE = re.compile(r"^[a-z0-9][a-z0-9_-]{0,62}$")
 BAD = ("NaN", "+Inf", "-Inf")
 
-# Static call graph from the demo architecture (flagd edges deliberately omitted).
+# Static call graph from the demo architecture (flag-service edges deliberately omitted).
 # Confirmed service names in compose.yaml (PostgreSQL service is 'astronomy-db').
 EDGES = [
     ("load-generator", "frontend-proxy"),
@@ -77,8 +79,14 @@ def _prom(path, **params):
 
 
 def _is_blocked_query_or_metric(text):
-    low = str(text).lower()
-    return any(b in low for b in BLOCKED_METRIC_SUBSTRINGS)
+    return fairplay.is_blocked_text(text)
+
+
+def _clamp(value, lo, hi, default):
+    try:
+        return max(lo, min(hi, int(value)))
+    except (TypeError, ValueError):
+        return default
 
 
 def _by_service(query):
@@ -123,6 +131,9 @@ def list_metrics(match="", limit=40):
 
 
 def metric_query(promql):
+    promql = str(promql).strip()
+    if len(promql) > 500:
+        return {"note": "query too long (max 500 chars)"}
     if _is_blocked_query_or_metric(promql):
         return {"note": "feature-flag metrics are excluded by fair-play rules"}
     res = [
@@ -138,6 +149,7 @@ def metric_query(promql):
 
 def metric_trend(promql, minutes=30):
     """Summarise a range query: first/last/min/max and how monotonic the rise is (leak signature)."""
+    promql, minutes = str(promql).strip()[:500], _clamp(minutes, 5, 180, 30)
     if _is_blocked_query_or_metric(promql):
         return {"note": "feature-flag metrics are excluded by fair-play rules"}
     end = time.time()
@@ -186,7 +198,7 @@ def container_health():
         s = (s or "").strip("%")
         return float(s) if s.replace(".", "", 1).isdigit() else 0.0
 
-    out = {"total": 0, "not_running": [], "restarts_or_oom": [], "hot": [], "cpu_limited": []}
+    out = {"total": 0, "running": [], "not_running": [], "restarts_or_oom": [], "hot": [], "cpu_limited": []}
     for c in info:
         st, hc = c["State"], c["HostConfig"]
         svc = c["Config"]["Labels"].get("com.docker.compose.service", c["Name"].strip("/"))
@@ -195,6 +207,8 @@ def container_health():
         out["total"] += 1
         s = stats.get(c["Id"][:12], {})
         cpu, mem = pct(s.get("CPUPerc")), pct(s.get("MemPerc"))
+        if st["Status"] == "running":
+            out["running"].append(svc)
         if st["Status"] != "running":
             out["not_running"].append({
                 "service": svc,
@@ -216,6 +230,9 @@ def container_health():
                 "cpus": round(hc["NanoCpus"] / 1e9, 2),
                 "memory_limit_mb": round(hc["Memory"] / (1024 * 1024), 1) if hc.get("Memory") else None,
             })
+    out["running"].sort()
+    out["note"] = ("'running' lists every healthy-state container. A service missing from not_running/hot/cpu_limited "
+                   "is simply fine; only an entry in not_running means it is down.")
     return out
 
 
@@ -230,6 +247,9 @@ def get_logs(service, minutes=10, limit=6):
     """Recent error-looking log lines for a service, grouped into patterns with counts."""
     if service in BLOCKED_SERVICES:
         return {"note": "flag service logs are not available to the agent"}
+    if not SERVICE_RE.match(str(service)):
+        return {"note": f"invalid service name {service!r}"}
+    minutes, limit = _clamp(minutes, 1, 60, 10), _clamp(limit, 1, 10, 6)
     raw = _run(COMPOSE + ["logs", "--no-color", "--since", f"{minutes}m", service], 40).splitlines()
     pats, ex, n_err = Counter(), {}, 0
     for line in raw:
@@ -260,6 +280,7 @@ def topology(service):
 
 
 def deploy_history(minutes=120):
+    minutes = _clamp(minutes, 1, 1440, 120)
     url = os.environ.get("DEPLOY_HISTORY_URL")
     if url:
         return requests.get(url, params={"minutes": minutes}, timeout=10).json()
@@ -268,7 +289,7 @@ def deploy_history(minutes=120):
         git_out = _run(["git", "log", f"--since={minutes} minutes ago", "-n", "10", "--oneline"])
         commits = [
             line for line in git_out.splitlines()
-            if not any(w in line.lower() for w in ("faultctl", "flagd"))
+            if not fairplay.is_blocked_text(line)
         ]
     except Exception:
         pass
@@ -288,6 +309,8 @@ def deploy_history(minutes=120):
 # ---------- triage: one cheap scan across ALL signals and ALL services ----------
 def triage(window_min=5, baseline_offset_min=30):
     """Compare the last window against an earlier baseline for every service and operation."""
+    window_min = _clamp(window_min, 1, 30, 5)
+    baseline_offset_min = _clamp(baseline_offset_min, 5, 240, 30)
     w, off = f"{window_min}m", f"{baseline_offset_min}m"
     srv = '{span_kind="SPAN_KIND_SERVER"'
     notes, anomalies = [], []
@@ -297,6 +320,9 @@ def triage(window_min=5, baseline_offset_min=30):
 
     def op_rate(extra, offset=""):
         return f'sum by (service_name, span_name)(rate({CALLS}{{{extra}}}[{w}] {("offset " + off) if offset else ""}))'
+
+    def op_count(extra):
+        return f'sum by (service_name, span_name)(increase({CALLS}{{{extra}}}[{w}]))'
 
     def p95(offset=""):
         return (
@@ -349,13 +375,15 @@ def triage(window_min=5, baseline_offset_min=30):
                 })
 
         # Also check per-operation error rates (catches single-operation failures like CartService/EmptyCart)
-        op_tot = _by_service_and_op("")
-        op_err = _by_service_and_op('status_code="STATUS_CODE_ERROR"')
+        # Counts, not rates: a rarely-called operation (EmptyCart runs only when an order is placed) can fail 100%
+        # of the time at well under 0.01 calls/s and must still be detected.
+        op_tot = _by_service_and_op(op_count('span_kind="SPAN_KIND_SERVER"'))
+        op_err = _by_service_and_op(op_count('span_kind="SPAN_KIND_SERVER",status_code="STATUS_CODE_ERROR"'))
         for (svc, op), err_val in op_err.items():
             if svc in ("load-generator", "?"):
                 continue
             tot_val = op_tot.get((svc, op), 0.0)
-            if tot_val > 0.01 and err_val / tot_val >= 0.10:
+            if err_val >= 2 and tot_val > 0 and err_val / tot_val >= 0.10:
                 op_er = err_val / tot_val
                 anomalies.append({
                     "type": "operation_error_rate",
@@ -372,6 +400,8 @@ def triage(window_min=5, baseline_offset_min=30):
     try:
         c = container_health()
         containers = {k: c[k] for k in ("not_running", "restarts_or_oom", "hot", "cpu_limited") if c.get(k)}
+        containers["running_count"] = len(c.get("running", []))
+        containers["note"] = "only problem containers are listed; every other container is running"
     except Exception as e:
         containers = {}
         notes.append(f"container scan failed: {e}")

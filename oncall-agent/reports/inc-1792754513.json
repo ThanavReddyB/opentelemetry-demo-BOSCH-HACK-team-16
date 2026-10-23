@@ -1,0 +1,85 @@
+{
+  "incident_id": "inc-1792754513",
+  "status": "Escalated",
+  "alert": "checkout error rate elevated",
+  "timeline": {
+    "detected_at": "2026-10-23T11:21:53Z",
+    "completed_at": "2026-10-23T11:23:32Z",
+    "tool_calls_count": 6
+  },
+  "diagnosis": {
+    "fault_class": "unknown",
+    "failing_component": "unknown",
+    "cause": "Agent output was not valid JSON; escalating safely to a human.",
+    "confidence": "low",
+    "evidence": [],
+    "dropped_ungrounded_evidence": [],
+    "secondary_findings": [],
+    "suggested_remedy": "none/escalate",
+    "escalate_to_human": true
+  },
+  "action_plan": {
+    "allowed": false,
+    "escalate": true,
+    "incident_id": "inc-1792754513",
+    "reason": "Diagnosis confidence is low or escalation was requested by the agent."
+  },
+  "human_approval": null,
+  "execution": null,
+  "verification": null,
+  "prevention_recommendation": "Add targeted service-level alerts and runbook automation for this failure mode.",
+  "observations": [
+    {
+      "id": "obs-1",
+      "timestamp": "2026-10-23T11:21:57Z",
+      "tool": "triage",
+      "args": {
+        "window_min": 5
+      },
+      "output_preview": "{\"obs\": \"obs-1\", \"window_min\": 5, \"anomalies\": [{\"type\": \"operation_error_rate\", \"service\": \"cart\", \"operation\": \"POST /oteldemo.CartService/EmptyCart\", \"score\": 95, \"detail\": \"operation POST /oteldemo.CartService/EmptyCart error rate 100.0%\"}], \"containers\": {\"hot\": [{\"service\": \"ad\", \"cpu_pct\": 0.14, \"mem_pct_of_limit\": 86.28}, {\"service\": \"astronomy-db\", \"cpu_pct\": 0.0, \"mem_pct_of_limit\": 79.73}, {\"service\": \"checkout\", \"cpu_pct\": 4.42, \"mem_pct_of_limit\": 72.64}, {\"service\": \"email\", \"cpu_p"
+    },
+    {
+      "id": "obs-2",
+      "timestamp": "2026-10-23T11:21:59Z",
+      "tool": "error_hotspots",
+      "args": {
+        "service": "cart"
+      },
+      "output_preview": "{\"obs\": \"obs-2\", \"service_queried\": \"cart\", \"window_min\": 15, \"traces_checked\": 100, \"errored_traces\": 4, \"root_error_hotspots\": [{\"service\": \"frontend-proxy\", \"operation\": \"router frontend egress\", \"message\": \"\", \"count\": 4, \"example_traces\": [\"9d24d945774b200adb1337620a4757b3\", \"60ff589e5a457c06f7f31f452747f1f2\"]}]}"
+    },
+    {
+      "id": "obs-3",
+      "timestamp": "2026-10-23T11:21:59Z",
+      "tool": "trace_detail",
+      "args": {
+        "trace_id": "9d24d945774b200adb1337620a4757b3"
+      },
+      "output_preview": "{\"obs\": \"obs-3\", \"trace_id\": \"9d24d945774b200adb1337620a4757b3\", \"spans\": 56, \"error_spans\": 3, \"root_error_spans\": [{\"service\": \"frontend-proxy\", \"operation\": \"router frontend egress\", \"span_id\": \"2da30bee38b26087\", \"message\": \"\", \"duration_ms\": 14999.5}], \"slowest_spans\": [{\"service\": \"checkout\", \"operation\": \"prepareOrderItemsAndShippingQuoteFromCart\", \"duration_ms\": 47402.6}, {\"service\": \"checkout\", \"operation\": \"oteldemo.CartService/GetCart\", \"duration_ms\": 47390.2}, {\"service\": \"load-gener"
+    },
+    {
+      "id": "obs-4",
+      "timestamp": "2026-10-23T11:22:01Z",
+      "tool": "get_logs",
+      "args": {
+        "service": "cart"
+      },
+      "output_preview": "{\"obs\": \"obs-4\", \"service\": \"cart\", \"window_min\": 10, \"lines\": 1628, \"error_lines\": 10, \"top_patterns\": [{\"count\": 5, \"example\": \"fail: cart.cartstore.ValkeyCartStore[2076027740]\"}, {\"count\": 5, \"example\": \"Error status code 'FailedPrecondition' with detail 'Can't access cart storage. System.ApplicationException: Wasn't able to connect to redis\"}]}"
+    },
+    {
+      "id": "obs-5",
+      "timestamp": "2026-10-23T11:22:20Z",
+      "tool": "container_health",
+      "args": {},
+      "output_preview": "{\"obs\": \"obs-5\", \"total\": 22, \"running\": [\"ad\", \"astronomy-db\", \"cart\", \"checkout\", \"currency\", \"email\", \"frontend\", \"frontend-proxy\", \"grafana\", \"image-provider\", \"jaeger\", \"load-generator\", \"opamp-server\", \"otel-collector\", \"payment\", \"product-catalog\", \"prometheus\", \"quote\", \"recommendation\", \"shipping\", \"telemetry-docs\", \"valkey-cart\"], \"not_running\": [], \"restarts_or_oom\": [], \"hot\": [{\"service\": \"ad\", \"cpu_pct\": 0.12, \"mem_pct_of_limit\": 86.32}, {\"service\": \"astronomy-db\", \"cpu_pct\": 4.94,"
+    },
+    {
+      "id": "obs-6",
+      "timestamp": "2026-10-23T11:23:07Z",
+      "tool": "deploy_history",
+      "args": {
+        "minutes": 120
+      },
+      "output_preview": "{\"obs\": \"obs-6\", \"window_min\": 120, \"recent_git_commits\": [\"270757cd feat(oncall-agent): add read tools, diagnosis loop, human approval gate and Action API\", \"d826150c Architecture v2: rules enforcement, scope tiers, one-page overview\", \"e2680edb Add Groq LLM setup for the on-call agent\", \"142ccdb7 Merge branch 'main' of https://github.com/ThanavReddyB/opentelemetry-demo-BOSCH-HACK-team-16\", \"2fbf7b67 Added Architecture doc\", \"f03a2e55 Revert \\\"Add Groq LLM setup for the on-call agent\\\"\", \"f6099"
+    }
+  ]
+}

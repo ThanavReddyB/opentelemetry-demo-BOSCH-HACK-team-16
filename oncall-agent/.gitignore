@@ -2,4 +2,4 @@
 __pycache__/
 KILL_SWITCH
 logs/
-reports/
+.pytest_cache/
