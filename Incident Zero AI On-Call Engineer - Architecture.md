@@ -20,7 +20,7 @@ Every rule from the brief, and the mechanism that enforces it.
 | Evidence must exist in the data; invented evidence is penalised | Every claim cites observation IDs. The validator rejects any citation that does not exist, is from another incident, or came from a failed query (section 7). |
 | Provide a dry-run mode and a kill switch | Section 9. Both are required for the Day 2 minimum, so they are built and demonstrated, not just designed. |
 | Be honest about what does not work | Limitations and the evaluation note list real failures. Offline runs are labelled Simulated. |
-| Every member commits code; all code written on the day from 09:15 | Each person owns at least one module (section 14). No pre-built code is pushed. |
+| Every member commits code (Team of 5); all code written on the day from 09:15 | Each of the 5 team members owns at least one module/deliverable (section 14) and commits code directly. No pre-built code is pushed. |
 | AI coding assistants must be declared; every member can explain and change what they submit | Team form lists every AI assistant and model used. Each owner walks the mentor through their module. |
 | Open-source libraries and agent frameworks are allowed | We use a plain tool-calling loop plus a few libraries (HTTP client, `jsonschema`). Libraries go on the team form. |
 
@@ -73,8 +73,8 @@ The agent sees telemetry only through typed tools. Each tool takes a time window
 
 | Tool | Backend (verified in our environment unless noted) | Returns |
 | --- | --- | --- |
-| `get_metrics(service, metric, window)` | Prometheus at `localhost:9090`. Filter by the `service_name` label, not `job` (only `ad` appears under `job`). Container CPU and memory series exist (`container_cpu_utilization_ratio`, `container_memory_percent_ratio`), plus HTTP client and DB duration histograms. Span-derived error and latency metric names are still unconfirmed. | Trend, current value, change versus baseline |
-| `search_traces(service, operation, only_errors, window, limit)` | Jaeger through the proxy at `localhost:8080/jaeger/ui/api/v3/`. Other services use random ports that change on restart, so we never hardcode them. | Failing or slow traces with trace IDs, failing span names and error tags |
+| `get_metrics(service, metric, window)` | Prometheus at `localhost:9090`. Filter by the `service_name` label, not `job` (only `ad` appears under `job`). Container CPU and memory series exist (`container_cpu_utilization_ratio`, `container_memory_percent_ratio`), plus HTTP client and DB duration histograms, and span-derived RED metrics (`traces_span_metrics_calls_total`, `traces_span_metrics_duration_milliseconds_bucket`). | Trend, current value, change versus baseline |
+| `search_traces(service, operation, only_errors, window, limit)` | Jaeger through the proxy at `localhost:8080/jaeger/api` (or `/jaeger/ui/api`). Other services use random ports that change on restart, so we never hardcode them. | Failing or slow traces with trace IDs, failing span names and error tags |
 | `get_trace(trace_id)` | Same Jaeger API | Span tree summary: the earliest failing span and its parent chain |
 | `search_logs(service, pattern, level, window)` | OpenSearch is not running on our laptops, so the live fallback is container logs through `docker compose logs`. Offline bundles carry recorded logs. | Top repeated error lines with counts and sample IDs |
 | `get_container_health()` | Read-only container status: state, restart counts, health | Stopped, restarting or unhealthy services |
@@ -166,17 +166,27 @@ Our environment runs on Docker Compose, so the scale action is not available loc
 - **Offline mode:** laptops that cannot run the full demo read the offline bundles. Every record is marked offline, actions go to a labelled mock, and the final status is Simulated, not Resolved, unless the bundle holds real post-action telemetry.
 - **Backends are config, not code:** all endpoints live in one config file. Ports other than 8080 and 9090 are random, so tools resolve them at startup or go through the proxy.
 
-## 14. Repository layout and ownership
+## 14. Repository layout and ownership (Team of 5)
 
 ```
-oncall-agent/        agent package (no flagd, faultctl, docker control, or flag files)
-  tools/  loop/  evidence/  policy/  approval/  executor/  verifier/  report/
-devtools/            our practice-incident injector and test harness (never imported by the agent)
-bundles/             offline incident bundles, if provided
-README.md  ARCHITECTURE.md  EVALUATION.md  team form
+oncall-agent/          agent package (never imports faultctl or reads flagd to diagnose)
+  agent.py             LLM investigation loop + grounded diagnosis + full incident orchestrator
+  jaeger_tools.py      Read-only Jaeger trace & root-error hotspot tools
+  ops_tools.py         Read-only Prometheus metrics, container health, logs, topology & triage tools
+  registry.py          Merged tool registry, observation store & evidence grounding validator
+  action_api.py        Allowlisted Action API, SHA-256 human approval gate, kill switch, verifier & reporter
+  check_llm.py         LLM connectivity & tool-calling verification script
+  ask_llm.py           Quick LLM sanity check CLI
+faultctl.py            Practice-incident injector (dev/test tool only, outside agent package)
+Incident Zero AI On-Call Engineer - Architecture.md
 ```
 
-Owners are assigned in the Checkpoint 1 split. Each member owns at least one module that they commit and can explain.
+Each of the **5 team members** owns and commits a distinct component:
+1. **Member 1 (Infra & Fault Injection)**: `faultctl.py`, Docker Compose setup & environment verification.
+2. **Member 2 (Trace & Topology Tools — "Eyes")**: `oncall-agent/jaeger_tools.py` (`error_hotspots`, `trace_detail`, `attribute_skew`, `edge_latency_gap`).
+3. **Member 3 (Metrics, Logs & Triage Tools — "Eyes")**: `oncall-agent/ops_tools.py` (`triage`, `container_health`, `get_logs`, `metric_trend`, `topology`).
+4. **Member 4 (Agent Loop & Evidence Grounding — "Brain")**: `oncall-agent/agent.py`, `oncall-agent/registry.py`, `oncall-agent/check_llm.py`.
+5. **Member 5 (Safety, Human Approval, Action API & Reporting — "Hands")**: `oncall-agent/action_api.py` (Approval Gate, Kill Switch, Dry-Run, Recovery Verifier, Incident Reports) & Architecture/Evaluation docs.
 
 ## 15. Testing and evaluation
 
