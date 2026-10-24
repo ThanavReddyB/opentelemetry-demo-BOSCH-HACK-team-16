@@ -39,6 +39,7 @@ MAX_ACTIONS_PER_HOUR = int(os.environ.get("MAX_ACTIONS_PER_HOUR", "3"))
 
 ALLOWED_ACTIONS = {"restart_service", "toggle_feature_flag", "throttle_load_generator", "scale_service"}
 
+BACKING_STORES = {"valkey-cart", "astronomy-db", "kafka"}
 ALLOWED_SERVICES = {
     "ad", "accounting", "astronomy-db", "cart", "checkout", "currency", "email", "fraud-detection",
     "frontend", "frontend-proxy", "image-provider", "kafka", "load-generator", "payment",
@@ -51,8 +52,8 @@ PROTECTED_FROM_RESTART = {"frontend-proxy"}
 # the agent never reads switch state to diagnose.
 ALLOWED_FLAGS = {
     "adFailure", "adHighCpu", "adManualGc", "cartFailure", "emailMemoryLeak", "failedReadinessProbe",
-    "imageSlowLoad", "kafkaQueueProblems", "loadGeneratorFloodHomepage", "paymentFailure",
-    "paymentUnreachable", "productCatalogFailure", "recommendationCacheFailure",
+    "imageSlowLoad", "intlShippingSlowdown", "kafkaQueueProblems", "loadGeneratorFloodHomepage", "paymentFailure",
+    "paymentUnreachable", "productCatalogFailure", "productCatalogLockContention", "recommendationCacheFailure",
 }
 SERVICE_TO_FAULT_FLAG = {
     ("payment", "app_error"): "paymentFailure",
@@ -63,15 +64,29 @@ SERVICE_TO_FAULT_FLAG = {
     ("product-catalog", "partial_failure"): "productCatalogFailure",
     ("product-catalog", "app_error"): "productCatalogFailure",
     ("recommendation", "memory_leak"): "recommendationCacheFailure",
+    ("recommendation", "latency_regression"): "recommendationCacheFailure",
     ("email", "memory_leak"): "emailMemoryLeak",
+    ("email", "latency_regression"): "emailMemoryLeak",
     ("ad", "app_error"): "adFailure",
     ("ad", "cpu_saturation"): "adHighCpu",
+    ("ad", "latency_regression"): "adHighCpu",
     ("frontend", "traffic_flood"): "loadGeneratorFloodHomepage",
+    ("frontend-proxy", "traffic_flood"): "loadGeneratorFloodHomepage",
     ("load-generator", "traffic_flood"): "loadGeneratorFloodHomepage",
+    ("shipping", "latency_regression"): "intlShippingSlowdown",
+    ("quote", "latency_regression"): "intlShippingSlowdown",
+    ("product-catalog", "latency_regression"): "productCatalogLockContention",
+    ("product-catalog", "cpu_saturation"): "productCatalogLockContention",
+    ("image-provider", "latency_regression"): "imageSlowLoad",
+    ("frontend-proxy", "latency_regression"): "imageSlowLoad",
+    ("image-provider", "network_degradation"): "imageSlowLoad",
     ("fraud-detection", "app_error"): "kafkaQueueProblems",
 }
 # Fault classes caused by an application-level fault switch: a restart cannot clear these, the switch must be turned off.
-SWITCH_FIXABLE = {"app_error", "partial_failure", "traffic_flood", "memory_leak", "cpu_saturation", "dependency_down"}
+SWITCH_FIXABLE = {"app_error", "partial_failure", "traffic_flood", "memory_leak", "cpu_saturation", "dependency_down",
+                  "latency_regression"}
+# A container with an explicit CPU cap showing these symptoms is starved: recreating it restores its normal limits.
+STARVATION_CLASSES = {"resource_starvation", "cpu_saturation", "latency_regression"}
 # "restart" is checked before the others so "restart the load generator" is not mistaken for throttling.
 REMEDY_KEYWORDS = [
     ("restart", "restart_service"),
@@ -141,13 +156,17 @@ def _escalate(incident_id, reason):
     return {"allowed": False, "escalate": True, "incident_id": incident_id, "reason": reason}
 
 
-def build_action_plan(incident_id: str, diagnosis: dict, observed_services: set, down_services=frozenset()) -> dict:
+def build_action_plan(incident_id: str, diagnosis: dict, observed_services: set, down_services=frozenset(),
+                      limited_services=frozenset(), round_no: int = 1) -> dict:
     """Deterministic policy: map the diagnosis onto one concrete allowlisted action, or escalate.
 
     The LLM's suggested remedy is only a hint. The runbook decides: a container that is actually down is
     restarted; an application-level fault with a known remediation switch gets that switch turned off
     (a restart cannot clear it). Any override is recorded in plan["policy_note"] and shown to the human."""
-    if diagnosis.get("escalate_to_human") or diagnosis.get("confidence") == "low":
+    # Low confidence always goes to a human. A model that hesitates despite solid evidence (medium/high confidence,
+    # 2+ verified items) still gets its fix proposed: the human at the approval gate makes that call, not the model.
+    hesitated = bool(diagnosis.get("escalate_to_human"))
+    if diagnosis.get("confidence") == "low" or (hesitated and len(diagnosis.get("evidence") or []) < 2):
         return _escalate(incident_id, "Diagnosis confidence is low or escalation was requested by the agent.")
 
     remedy = str(diagnosis.get("suggested_remedy", "")).lower()
@@ -156,6 +175,11 @@ def build_action_plan(incident_id: str, diagnosis: dict, observed_services: set,
     cause = str(diagnosis.get("cause", "")).lower()
 
     action_type = next((a for kw, a in REMEDY_KEYWORDS if kw in remedy), None)
+    if action_type is None and hesitated:  # the model named no remedy; take the runbook's
+        if comp in down_services:
+            action_type = "restart_service"
+        elif (comp, fault_class) in SERVICE_TO_FAULT_FLAG:
+            action_type = "toggle_feature_flag"
     if action_type not in ALLOWED_ACTIONS:
         return _escalate(incident_id, f"Proposed remedy {diagnosis.get('suggested_remedy')!r} is not in the Action API allowlist.")
     if comp not in ALLOWED_SERVICES:
@@ -164,8 +188,11 @@ def build_action_plan(incident_id: str, diagnosis: dict, observed_services: set,
         return _escalate(incident_id, f"Policy rejected action: target service {comp!r} was never observed in tool telemetry.")
 
     policy_note = None
-    if comp in down_services:
-        preferred = "restart_service"          # the container is down: a switch cannot help
+    if fault_class == "network_degradation" and (comp, fault_class) not in SERVICE_TO_FAULT_FLAG:
+        return _escalate(incident_id, "Network latency or loss between services has no allowlisted fix; escalating with findings.")
+    starved = comp in limited_services and fault_class in STARVATION_CLASSES
+    if comp in down_services or starved:
+        preferred = "restart_service"          # down or CPU-capped container: a switch cannot help
     elif fault_class in SWITCH_FIXABLE and (comp, fault_class) in SERVICE_TO_FAULT_FLAG:
         preferred = "toggle_feature_flag"      # app-level fault: restarting would not clear it
     else:
@@ -173,6 +200,9 @@ def build_action_plan(incident_id: str, diagnosis: dict, observed_services: set,
     if preferred != action_type and action_type != "throttle_load_generator":
         policy_note = f"Runbook override: agent suggested {action_type}, policy chose {preferred} for ({comp}, {fault_class})."
         action_type = preferred
+    if hesitated:
+        policy_note = ("The model wanted a human to look (see its findings); the evidence is strong enough to propose "
+                       "this fix for YOUR decision. Type 'no' to leave it to a human." + (f" {policy_note}" if policy_note else ""))
 
     params, rollback = {}, None
     if action_type == "toggle_feature_flag":
@@ -182,8 +212,10 @@ def build_action_plan(incident_id: str, diagnosis: dict, observed_services: set,
         if not flag:
             if comp == "ad" and "gc" in cause:
                 flag = "adManualGc"
-            elif comp == "payment" and ("unreachable" in cause or "refused" in cause):
-                flag = "paymentUnreachable"
+            elif comp == "ad" and fault_class == "app_error" and ("cpu" in cause or "gc" in cause):
+                flag = "adHighCpu"
+            elif (comp, fault_class) == ("checkout", "dependency_down"):
+                flag = "paymentUnreachable" if "payment" in cause else None
             else:
                 flag = SERVICE_TO_FAULT_FLAG.get((comp, fault_class))
         if flag not in ALLOWED_FLAGS:
@@ -192,7 +224,7 @@ def build_action_plan(incident_id: str, diagnosis: dict, observed_services: set,
         rollback = {"reversible": True, "description": f"Restore '{flag}' to its previous variant if verification fails."}
 
     elif action_type == "restart_service":
-        reset = fault_class == "resource_starvation" or "limit" in cause or "starv" in cause
+        reset = starved or fault_class == "resource_starvation" or "limit" in cause or "starv" in cause
         params = {"service_name": comp, "reset_limits": reset}
         rollback = {"reversible": False, "description": "A restart has no natural inverse; if verification fails, escalate to a human."}
 
@@ -219,7 +251,8 @@ def build_action_plan(incident_id: str, diagnosis: dict, observed_services: set,
         "allowed": True,
         "escalate": False,
         "incident_id": incident_id,
-        "proposal_version": 1,
+        "proposal_version": round_no,
+        "round": round_no,
         "action_type": action_type,
         "target": comp,
         "parameters": params,
@@ -247,7 +280,7 @@ def request_human_approval(diagnosis: dict, plan: dict, dry_run: bool = False) -
         return {"approved": False, "status": "kill_switch_active", "reason": "Kill switch is ON"}
 
     print("\n" + "=" * 78)
-    print("  AI ON-CALL ENGINEER - HUMAN APPROVAL GATE")
+    print(f"  AI ON-CALL ENGINEER - HUMAN APPROVAL GATE   (fix round {plan.get('round', 1)})")
     print("=" * 78)
     print(f"  Incident ID       : {plan.get('incident_id')}")
     print(f"  Failing Component : {diagnosis.get('failing_component')} ({diagnosis.get('fault_class')})")
@@ -285,6 +318,7 @@ def request_human_approval(diagnosis: dict, plan: dict, dry_run: bool = False) -
         "approval_digest": plan["approval_digest"],
         "consumed": False,
         "operator_input": choice,
+        "approver": os.environ.get("ONCALL_APPROVER") or os.environ.get("USERNAME") or os.environ.get("USER") or "operator",
     }
     log_audit("approval_decision", {"incident_id": plan["incident_id"], **decision})
     return decision
@@ -357,7 +391,7 @@ def execute_action(plan: dict, approval: dict) -> dict:
             res = {"executed": False, "status": "unsupported_action", "detail": f"{action_type} is not supported"}
     except Exception as e:  # noqa: BLE001
         res = {"executed": False, "status": "execution_error", "detail": f"{type(e).__name__}: {e}"}
-    log_audit("action_executed", {"incident_id": iid, **res})
+    log_audit("action_executed", {"incident_id": iid, "target": plan.get("target"), **res})
     return res
 
 
@@ -393,7 +427,14 @@ def verify_recovery(target_service: str, settle_seconds: int = 75, samples: int 
     print(f"\n[VERIFIER] Waiting {settle_seconds}s for fresh telemetry before checking '{target_service}'...")
     time.sleep(max(1, settle_seconds))
     watch = {target_service} | set(ops_tools.topology(target_service)["called_by"])
-    checks, passing = [], 0
+    deps, todo = set(), [target_service]
+    while todo:  # everything the target depends on, directly or indirectly
+        cur = todo.pop()
+        for a, b in ops_tools.EDGES:
+            if a == cur and b not in deps:
+                deps.add(b)
+                todo.append(b)
+    checks, passing, target_passing = [], 0, 0
     for i in range(samples):
         if is_kill_switch_active():
             return {"verified": False, "status": "aborted_kill_switch", "checks": checks}
@@ -403,17 +444,38 @@ def verify_recovery(target_service: str, settle_seconds: int = 75, samples: int 
             a for a in scan.get("anomalies", [])
             if (a.get("service") == target_service) or (a.get("service") in watch and a.get("type") in FAIL_TYPES)
         ]
-        down = [c for c in scan.get("containers", {}).get("not_running", []) if c.get("service") == target_service]
-        ok = not blind and not left and not down
-        checks.append({"sample": i + 1, "timestamp": _now(), "passed": ok, "blind": blind,
-                       "remaining_anomalies": left, "not_running": down})
+        box = scan.get("containers", {})
+        down = [c for c in box.get("not_running", []) if c.get("service") == target_service]
+        capped = [c for c in box.get("cpu_limited", []) if c.get("service") == target_service]
+        # A stopped container the target depends on means it cannot really be healthy, whatever the metrics say.
+        stopped_deps = [c.get("service") for c in box.get("not_running", []) if c.get("service") in deps]
+        # Silence is not recovery: someone must be talking to the target (or, for a store, to its callers).
+        try:
+            rates = ops_tools.service_rates(3)
+        except Exception:  # noqa: BLE001 - unknown traffic: rely on the other checks
+            rates = None
+        quiet = rates is not None and not any(rates.get(s, 0) > 0 for s in watch)
+        ok = not blind and not left and not down and not capped and not stopped_deps and not quiet
+        own = [a for a in left if a.get("service") == target_service]
+        # Stores emit no spans of their own, so only their callers can show that they recovered.
+        target_ok = (not blind and not down and not capped and not stopped_deps and not quiet
+                     and (not left if target_service in BACKING_STORES else not own))
+        others = [a for a in scan.get("anomalies", []) if a not in left]
+        checks.append({"sample": i + 1, "timestamp": _now(), "passed": ok, "target_ok": target_ok, "blind": blind,
+                       "remaining_anomalies": left, "not_running": down, "still_cpu_capped": capped,
+                       "stopped_dependencies": stopped_deps, "no_traffic_seen": quiet,
+                       "other_anomalies": others[:6]})
         passing += ok
+        target_passing += target_ok
         if i + 1 < samples:
             time.sleep(spacing_seconds)
     verified = passing == samples
+    target_recovered = target_passing == samples
     result = {
         "verified": verified,
-        "status": "Resolved" if verified else "Failed_Verification_Escalated",
+        "target_recovered": target_recovered,
+        "status": "Resolved" if verified else ("Target_Recovered_Callers_Still_Failing" if target_recovered
+                                               else "Failed_Verification_Escalated"),
         "target_service": target_service,
         "watched_services": sorted(watch),
         "passing_samples": passing,
@@ -435,6 +497,7 @@ PREVENTION = {
     "traffic_flood": "Add rate limiting at the edge proxy to shed excess load gracefully.",
     "network_degradation": "Add timeouts, retries with budgets and per-edge latency SLO alerts.",
     "resource_starvation": "Reserve minimum CPU/memory per service and alert on throttling.",
+    "latency_regression": "Add per-operation latency SLOs with alerting and a timeout budget on every downstream call.",
 }
 
 
@@ -454,63 +517,79 @@ def _final_status(plan, approval, execution, verification):
     return "Failed_Verification_Escalated"
 
 
-def write_incident_report(incident_id, alert, started_at, diagnosis, plan, approval, execution, verification, observations) -> dict:
-    """Write the machine-readable JSON report and a readable Markdown post-mortem."""
+def _prevention(diagnosis):
+    return PREVENTION.get((diagnosis or {}).get("fault_class", "unknown"),
+                          "Add targeted service-level alerts and runbook automation for this failure mode.")
+
+
+def _round_md(n, r):
+    d, plan = r.get("diagnosis") or {}, r.get("action_plan") or {}
+    approval, execution, ver = r.get("human_approval"), r.get("execution"), r.get("verification")
+    md = [f"## Round {n}: `{d.get('failing_component')}` ({d.get('fault_class')}), confidence `{d.get('confidence')}`",
+          f"- **Cause**: {d.get('cause')}", "", "**Evidence (each item checked against the tool output it cites)**"]
+    md += [f"- {e}" for e in d.get("evidence", [])] or ["- *(none verified; escalated)*"]
+    md += [f"- ~~{x}~~ *(dropped: not found in tool output)*" for x in d.get("dropped_ungrounded_evidence", [])]
+    md += [f"- Also seen: {sf}" for sf in d.get("secondary_findings", []) or []]
+    md += ["", "**Investigation**"]
+    md += [f"- `{o['timestamp'][11:19]}` `{o['id']}` **{o['tool']}**({json.dumps(o['args'])}): {o.get('finding', '')}"
+           for o in r.get("observations", [])]
+    md += ["", "**Remediation**"]
+    if plan.get("allowed"):
+        md += [f"- Action: `{plan['action_type']}` on `{plan['target']}` with `{json.dumps(plan['parameters'])}`",
+               f"- Approval: `{(approval or {}).get('operator_input', 'n/a')}` by `{(approval or {}).get('approver', 'n/a')}`"
+               f" (digest `{plan['approval_digest'][:16]}...`)",
+               f"- Outcome: {(execution or {}).get('detail', 'not executed')}"]
+        if plan.get("policy_note"):
+            md.append(f"- Policy: {plan['policy_note']}")
+    else:
+        md.append(f"- Escalated without automated action: {plan.get('reason', 'n/a')}")
+    if ver:
+        md.append(f"- Verification: `{ver.get('status')}` ({ver.get('passing_samples', 0)}/{ver.get('required_samples', 0)} clean scans)")
+        if ver.get("rollback"):
+            md.append(f"- Rollback: {json.dumps(ver['rollback'])}")
+    md += [f"- Prevention: {_prevention(d)}", ""]
+    return md
+
+
+def write_incident_report(incident_id, alert, started_at, diagnosis, plan, approval, execution, verification, observations,
+                          rounds=None, status=None, extra=None) -> dict:
+    """Write the machine-readable JSON report and a readable Markdown post-mortem (one section per fix round)."""
     REPORTS_DIR.mkdir(parents=True, exist_ok=True)
     finished_at = _now()
-    status = _final_status(plan, approval, execution, verification)
-    prevention = PREVENTION.get(diagnosis.get("fault_class", "unknown"),
-                                "Add targeted service-level alerts and runbook automation for this failure mode.")
+    rounds = rounds or [{"round": 1, "diagnosis": diagnosis, "action_plan": plan, "human_approval": approval,
+                         "execution": execution, "verification": verification, "observations": observations}]
+    status = status or _final_status(plan, approval, execution, verification)
     report = {
         "incident_id": incident_id,
         "status": status,
         "alert": alert,
-        "timeline": {"detected_at": started_at, "completed_at": finished_at, "tool_calls_count": len(observations)},
+        "timeline": {"detected_at": started_at, "completed_at": finished_at, "tool_calls_count": len(observations),
+                     "rounds": len(rounds)},
         "diagnosis": diagnosis,
         "action_plan": plan,
         "human_approval": approval,
         "execution": execution,
         "verification": verification,
-        "prevention_recommendation": prevention,
+        "rounds": rounds,
+        "prevention_recommendation": [_prevention(r.get("diagnosis")) for r in rounds],
         "observations": observations,
+        **(extra or {}),
     }
     json_path, md_path = REPORTS_DIR / f"{incident_id}.json", REPORTS_DIR / f"{incident_id}.md"
     json_path.write_text(json.dumps(report, indent=2, default=str) + "\n", encoding="utf-8")
 
-    md = [
-        f"# Incident Report: `{incident_id}`", "",
-        f"- **Final status**: `{status}`",
-        f"- **Detected**: `{started_at}`   **Completed**: `{finished_at}`",
-        f"- **Trigger**: {alert}", "",
-        "## 1. Diagnosis",
-        f"- **Failing component**: `{diagnosis.get('failing_component')}` (`{diagnosis.get('fault_class')}`)",
-        f"- **Confidence**: `{diagnosis.get('confidence')}`   **Escalate**: `{diagnosis.get('escalate_to_human')}`",
-        f"- **Cause**: {diagnosis.get('cause')}", "",
-        "## 2. Evidence (grounded in tool output)",
-    ]
-    md += [f"- {e}" for e in diagnosis.get("evidence", [])] or ["- *(none verified; escalated)*"]
-    for d in diagnosis.get("dropped_ungrounded_evidence", []):
-        md.append(f"- ~~{d}~~ *(dropped: not found in tool output)*")
-    for sf in diagnosis.get("secondary_findings", []) or []:
-        md.append(f"- Secondary: {sf}")
-    md += ["", "## 3. Investigation timeline"]
-    md += [f"- `{o['timestamp']}` **{o['tool']}**(`{json.dumps(o['args'])}`) -> `{o['id']}`" for o in observations]
-    md += ["", "## 4. Remediation and approval"]
-    if plan and plan.get("allowed"):
-        md += [
-            f"- **Action**: `{plan['action_type']}` on `{plan['target']}`  params `{json.dumps(plan['parameters'])}`",
-            f"- **Approval digest**: `{plan['approval_digest']}`",
-            f"- **Human decision**: `{approval.get('operator_input') if approval else 'n/a'}`",
-            f"- **Outcome**: {execution.get('detail') if execution else 'not executed'}",
-        ]
-    else:
-        md.append(f"- Escalated without automated action: {plan.get('reason') if plan else 'n/a'}")
-    md += ["", "## 5. Recovery verification",
-           f"- **Verified**: `{verification.get('verified') if verification else False}`  "
-           f"(`{verification.get('status') if verification else 'not run'}`)"]
-    if verification and verification.get("rollback"):
-        md.append(f"- **Rollback**: {json.dumps(verification['rollback'])}")
-    md += ["", "## 6. Prevention", f"- {prevention}", ""]
+    md = [f"# Incident Report: `{incident_id}`", "",
+          f"- **Final status**: `{status}`",
+          f"- **Detected**: `{started_at}`   **Completed**: `{finished_at}`   **Fix rounds**: {len(rounds)}",
+          f"- **Trigger**: {alert}"]
+    if extra and extra.get("llm_usage"):
+        md.append("- **LLM**: " + ", ".join(f"{u['provider']} ({u['calls']} calls, {u['tokens']} tokens)"
+                                           for u in extra["llm_usage"] if u.get("calls")))
+    if extra and extra.get("remaining_symptoms"):
+        md.append("- **Still open**: " + "; ".join(extra["remaining_symptoms"]))
+    md.append("")
+    for n, r in enumerate(rounds, 1):
+        md += _round_md(n, r)
     md_path.write_text("\n".join(md), encoding="utf-8")
     report["report_files"] = {"json": str(json_path), "markdown": str(md_path)}
     return report

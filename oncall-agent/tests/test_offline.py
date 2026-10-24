@@ -57,6 +57,11 @@ class GuardTests(unittest.TestCase):
         self.assertTrue(fairplay.is_blocked_text("flagd.evaluation"))
         self.assertTrue(fairplay.is_blocked_attr("feature_flag.key"))
         self.assertFalse(fairplay.is_blocked_text("CartService/EmptyCart"))
+        # connection noise to the flag service (e.g. while it restarts) is plumbing, not a caller fault
+        self.assertTrue(fairplay.is_flag_plumbing("connect ECONNREFUSED 172.20.0.5:8013"))
+        self.assertTrue(fairplay.is_flag_plumbing("", {"server.port": 8016}))
+        self.assertFalse(fairplay.is_flag_plumbing("connect ECONNREFUSED 172.20.0.9:6379", {"server.port": 6379}))
+        self.assertFalse(fairplay.is_flag_plumbing("timeout after 80130ms"))
 
 
 # ------------------------------------------------------------------ jaeger
@@ -95,6 +100,9 @@ class JaegerTests(unittest.TestCase):
     def setUp(self):
         jaeger_tools._RESOLVED = None
         jaeger_tools.EVIDENCE.clear()
+        p = mock.patch.object(jaeger_tools, "_direct_base", return_value=None)  # no Docker in offline tests
+        p.start()
+        self.addCleanup(p.stop)
 
     def test_v3_base_is_resolved_and_v1_paths_are_skipped(self):
         def fake_get(url, **kw):
@@ -196,18 +204,28 @@ class RegistryTests(unittest.TestCase):
 
 # ------------------------------------------------------------------ ops tools
 class OpsTests(unittest.TestCase):
-    def test_triage_catches_single_operation_failure(self):
+    @staticmethod
+    def _fake_prom(chronic):
         def fake_prom(path, **p):
             q = p.get("query", "")
             if "span_name" in q:
                 err = 'STATUS_CODE_ERROR' in q
-                rows = [("cart", "EmptyCart", 4.0 if err else 20.0), ("cart", "AddItem", 0.0 if err else 50.0)]  # counts in window
+                failing = chronic or "offset" not in q   # baseline windows are healthy unless the failure is chronic
+                rows = [("cart", "EmptyCart", (4.0 if failing else 0.0) if err else 20.0), ("cart", "AddItem", 0.0 if err else 50.0)]
                 return {"result": [{"metric": {"service_name": s, "span_name": o}, "value": [0, str(v)]} for s, o, v in rows if v > 0]}
             return {"result": [{"metric": {"service_name": "cart"}, "value": [0, "7.0"]}]}
-        with mock.patch.object(ops_tools, "_prom", fake_prom), mock.patch.object(ops_tools, "container_health", return_value={}):
+        return fake_prom
+
+    def test_triage_catches_single_operation_failure(self):
+        with mock.patch.object(ops_tools, "_prom", self._fake_prom(chronic=False)), mock.patch.object(ops_tools, "container_health", return_value={}):
             out = ops_tools.triage(window_min=5)
         ops = [a for a in out["anomalies"] if a["type"] == "operation_error_rate"]
         self.assertEqual(ops[0]["operation"], "EmptyCart")
+
+    def test_chronic_operation_failure_is_not_a_new_incident(self):
+        with mock.patch.object(ops_tools, "_prom", self._fake_prom(chronic=True)), mock.patch.object(ops_tools, "container_health", return_value={}):
+            out = ops_tools.triage(window_min=5)
+        self.assertFalse([a for a in out["anomalies"] if a["type"] == "operation_error_rate"])
 
     def test_flag_telemetry_blocked_in_queries_and_logs(self):
         self.assertIn("note", ops_tools.metric_query("sum(rate(flagd_evaluations[1m]))"))
@@ -239,6 +257,8 @@ class ActionApiTests(unittest.TestCase):
             mock.patch.object(action_api, "LOGS_DIR", t / "logs"),
             mock.patch.object(action_api, "AUDIT_LOG_FILE", t / "logs" / "audit.jsonl"),
             mock.patch.object(action_api, "REPORTS_DIR", t / "reports"),
+            # offline: the verifier sees steady traffic unless a test says otherwise
+            mock.patch.object(action_api.ops_tools, "service_rates", return_value={"cart": 0.5, "checkout": 0.2, "frontend": 1.0}),
         ]
         for p in self.patches:
             p.start()
@@ -278,6 +298,19 @@ class ActionApiTests(unittest.TestCase):
         self.assertTrue(self.plan(failing_component="shipping", suggested_remedy="restart a service")["escalate"])  # never observed
         self.assertTrue(self.plan(failing_component="frontend-proxy", suggested_remedy="restart a service")["escalate"])  # protected
         self.assertTrue(self.plan(suggested_remedy="throttle the load generator")["escalate"])  # only for traffic_flood
+
+    def test_hesitant_model_with_strong_evidence_still_gets_a_fix_proposed(self):
+        """Regression: round 2 named payment (medium, grounded evidence) but asked for a human because the same fix had
+        been applied earlier, so no fix was proposed and the operator was never asked."""
+        d = {"fault_class": "app_error", "failing_component": "payment", "cause": "charges fail", "confidence": "medium",
+             "evidence": ["obs-1: payment error rate 100%", "obs-3: Payment request failed"], "suggested_remedy": "none/escalate",
+             "escalate_to_human": True}
+        p = action_api.build_action_plan("i", d, {"payment", "checkout"})
+        self.assertTrue(p["allowed"])
+        self.assertEqual(p["parameters"]["flag_name"], "paymentFailure")
+        self.assertIn("YOUR decision", p["policy_note"])
+        self.assertTrue(action_api.build_action_plan("i", {**d, "confidence": "low"}, {"payment"})["escalate"])
+        self.assertTrue(action_api.build_action_plan("i", {**d, "evidence": d["evidence"][:1]}, {"payment"})["escalate"])
 
     def test_policy_overrides_pointless_restart_with_switch_fix(self):
         """Regression: LLM proposed restarting cart for an app-level fault; a restart cannot clear it."""
@@ -386,7 +419,7 @@ class ActionApiTests(unittest.TestCase):
         with mock.patch.object(adapters, "FLAG_FILE", flag_file), mock.patch.object(adapters, "_compose", lambda *a, **k: calls.append(a)):
             self.assertEqual(REAL_SET_FLAG("CARTFAILURE", "off"), "100%")
             self.assertEqual(json.loads(flag_file.read_text())["flags"]["cartFailure"]["defaultVariant"], "off")
-            self.assertEqual(calls, [("restart", "flagd")])
+            self.assertEqual(calls, [])  # no restart: the switch service picks up the file change itself
             with self.assertRaises(ValueError):
                 REAL_SET_FLAG("cartFailure", "bogus")
             with self.assertRaises(ValueError):
@@ -396,6 +429,22 @@ class ActionApiTests(unittest.TestCase):
 # ------------------------------------------------------------------ detector
 class DetectorTests(unittest.TestCase):
     ERR = {"type": "operation_error_rate", "service": "cart", "operation": "EmptyCart", "score": 95.0, "detail": "operation EmptyCart error rate 100.0%"}
+
+    def test_verifier_fails_while_a_dependency_is_stopped_or_nothing_is_seen(self):
+        """Regression: restarting cart 'verified' while valkey-cart was still stopped (too little traffic to alarm)."""
+        stopped = {"anomalies": [], "notes": [], "containers": {"not_running": [{"service": "valkey-cart", "state": "exited"}]}}
+        clean = {"anomalies": [], "notes": [], "containers": {}}
+        busy, silent = {"cart": 0.2, "checkout": 0.1}, {"frontend-proxy": 1.0}
+        with mock.patch.object(action_api.time, "sleep"):
+            with mock.patch.object(action_api.ops_tools, "triage", return_value=stopped),                     mock.patch.object(action_api.ops_tools, "service_rates", return_value=busy):
+                v = action_api.verify_recovery("cart")
+            self.assertFalse(v["verified"] or v["target_recovered"])
+            self.assertEqual(v["checks"][0]["stopped_dependencies"], ["valkey-cart"])
+            with mock.patch.object(action_api.ops_tools, "triage", return_value=clean):
+                with mock.patch.object(action_api.ops_tools, "service_rates", return_value=silent):
+                    self.assertFalse(action_api.verify_recovery("cart")["verified"])  # no traffic is not recovery
+                with mock.patch.object(action_api.ops_tools, "service_rates", return_value=busy):
+                    self.assertTrue(action_api.verify_recovery("cart")["verified"])
 
     def test_needs_persistence_then_cooldown(self):
         d = detector.Detector(persist=2, cooldown_s=600)
@@ -426,10 +475,12 @@ class DetectorTests(unittest.TestCase):
 
     def test_resource_pressure_detected_but_infra_ignored(self):
         fake = {"anomalies": [], "notes": [], "containers": {"hot": [
-            {"service": "ad", "cpu_pct": 150.0, "mem_pct_of_limit": 40.0},
+            {"service": "ad", "cpu_pct": 95.0, "mem_pct_of_limit": 40.0},          # at its 1-CPU cap: starved
             {"service": "email", "cpu_pct": 1.0, "mem_pct_of_limit": 97.0},
+            {"service": "frontend", "cpu_pct": 227.0, "mem_pct_of_limit": 50.0},   # busy on several cores, no cap: ignored
             {"service": "grafana", "cpu_pct": 1.0, "mem_pct_of_limit": 99.0},      # observability stack: ignored
-            {"service": "quote", "cpu_pct": 3.0, "mem_pct_of_limit": 75.0}]}}      # ordinary warm container: ignored
+            {"service": "quote", "cpu_pct": 3.0, "mem_pct_of_limit": 75.0}],      # ordinary warm container: ignored
+            "cpu_limited": [{"service": "ad", "cpus": 1.0}]}}
         with mock.patch.object(detector.ops_tools, "triage", return_value=fake):
             found = detector.scan()
         self.assertEqual({a["service"] for a in found}, {"ad", "email"})
@@ -487,6 +538,8 @@ class AgentLoopTests(unittest.TestCase):
         self.fake = FakeAdapters()
         a = mock.patch.multiple(action_api.adapters, restart_service=self.fake.restart_service, set_flag=self.fake.set_flag, throttle_load=self.fake.throttle_load)
         a.start(); self.patches.append(a)
+        self.rescan = mock.patch.object(agent, "_confirm_still_wrong", return_value=[])  # offline: nothing left after a fix
+        self.rescan.start(); self.patches.append(self.rescan)
 
     def tearDown(self):
         for p in self.patches:
@@ -532,6 +585,25 @@ class AgentLoopTests(unittest.TestCase):
             rep = self.run_loop(self.llm(self.GOOD), "yes")
         self.assertEqual(rep["status"], "Resolved")
         self.assertEqual(self.fake.calls, [("flag", "cartFailure", "off")])
+
+    def test_masked_second_fault_gets_its_own_round(self):
+        """Regression: with the cache down no checkout reached payment, so the payment fault only appeared after the
+        first fix. The agent declared 'Resolved' too early; now it re-scans and opens round 2."""
+        pay = {"fault_class": "app_error", "failing_component": "payment", "cause": "payment charge fails",
+               "confidence": "high", "evidence": self.GOOD, "secondary_findings": [], "suggested_remedy": "toggle a feature flag"}
+        llm = self.llm(self.GOOD)
+        llm.steps += [{"tool_calls": [tc(5, "triage", {}), tc(6, "error_hotspots", {"service": "frontend"})]},
+                      {"tool_calls": [tc(7, "get_logs", {"service": "cart"}), tc(8, "deploy_history", {})]},
+                      {"content": json.dumps(pay)}]
+        left = [{"type": "error_rate", "service": "payment", "detail": "error rate 100.0% (baseline 0.0%)", "score": 100.0}]
+        self.rescan.stop()
+        with mock.patch.object(agent, "_confirm_still_wrong", side_effect=[left, []]),                 mock.patch.object(action_api, "verify_recovery", return_value={"verified": True, "status": "Resolved"}),                 mock.patch.dict(registry.TOOLS, {"triage": lambda window_min=5: {"anomalies": left + [
+                    {"type": "operation_error_rate", "service": "cart", "operation": "EmptyCart", "detail": "x"}], "containers": {}}}):
+            rep = self.run_loop(llm, "yes")
+        self.rescan.start()
+        self.assertEqual(len(rep["rounds"]), 2)
+        self.assertEqual(rep["status"], "Resolved")
+        self.assertEqual(self.fake.calls, [("flag", "cartFailure", "off"), ("flag", "paymentFailure", "off")])
 
     def test_failed_verification_rolls_back_and_escalates(self):
         with mock.patch.object(action_api, "verify_recovery", return_value={"verified": False, "status": "Failed_Verification_Escalated"}):
@@ -581,6 +653,51 @@ class AgentLoopTests(unittest.TestCase):
             registry.call_tool("container_health", {})
         wrong["evidence"] = ["obs-1: valkey-cart exited"]
         self.assertNotIn("guard_triggered", agent.finalize(json.dumps(wrong)))
+
+    def test_unreachable_service_that_serves_traffic_is_an_app_error(self):
+        """Regression: payment failed every charge (app fault) but was called 'dependency_down', so the wrong switch was used."""
+        registry.reset_session()
+        with mock.patch.dict(registry.TOOLS, {"container_health": lambda: {"running": ["payment", "checkout"], "not_running": []}}):
+            registry.call_tool("container_health", {})
+        claim = {"fault_class": "dependency_down", "failing_component": "payment", "cause": "payment cannot be reached",
+                 "confidence": "high", "evidence": ["obs-1: payment checkout running"], "suggested_remedy": "toggle a feature flag"}
+        with mock.patch.object(agent.ops_tools, "service_rates", return_value={"payment": 0.03}):
+            d = agent.finalize(json.dumps(claim))
+        self.assertEqual((d["fault_class"], d["guard_triggered"]), ("app_error", "unreachable_but_serving_traffic"))
+        plan = action_api.build_action_plan("i", d, {"payment", "checkout"})
+        self.assertEqual(plan["parameters"]["flag_name"], "paymentFailure")
+        with mock.patch.object(agent.ops_tools, "service_rates", return_value={"checkout": 0.1}):   # payment gets nothing
+            self.assertEqual(agent.finalize(json.dumps(claim))["fault_class"], "dependency_down")
+
+    def test_stopped_container_beats_a_low_confidence_guess(self):
+        """Regression: valkey-cart was exited but the model chased email slowness (low confidence) and escalated."""
+        registry.reset_session()
+        with mock.patch.dict(registry.TOOLS, {"container_health": lambda: {"running": ["cart", "email"],
+                                                                           "not_running": [{"service": "valkey-cart", "state": "exited"}]}}):
+            registry.call_tool("container_health", {})
+        guess = {"fault_class": "latency_regression", "failing_component": "email", "cause": "email is slow",
+                 "confidence": "low", "evidence": [], "suggested_remedy": "none/escalate", "escalate_to_human": True}
+        d = agent.finalize(json.dumps(guess))
+        self.assertEqual((d["failing_component"], d["fault_class"], d["confidence"], d["guard_triggered"]),
+                         ("valkey-cart", "dependency_down", "medium", "stopped_container_takes_priority"))
+        self.assertTrue(any("email" in s for s in d["secondary_findings"]))
+        plan = action_api.build_action_plan("i", d, {"valkey-cart", "email"}, set(registry.DOWN_SERVICES))
+        self.assertEqual((plan["action_type"], plan["target"]), ("restart_service", "valkey-cart"))
+
+    def test_caller_blamed_for_stopped_dependency_is_retargeted(self):
+        """Regression: valkey-cart was stopped but the agent named cart (dependency_down), so policy restarted cart."""
+        registry.reset_session()
+        with mock.patch.dict(registry.TOOLS, {"container_health": lambda: {"running": ["cart", "checkout"],
+                                                                           "not_running": [{"service": "valkey-cart", "state": "exited"}]}}):
+            registry.call_tool("container_health", {})
+        blamed = {"fault_class": "dependency_down", "failing_component": "cart", "cause": "cart cannot reach its cache",
+                  "confidence": "high", "evidence": ["obs-1: valkey-cart exited"], "suggested_remedy": "restart a service"}
+        d = agent.finalize(json.dumps(blamed))
+        self.assertEqual((d["failing_component"], d["fault_class"], d["guard_triggered"]),
+                         ("valkey-cart", "dependency_down", "retargeted_to_stopped_dependency"))
+        plan = action_api.build_action_plan("i", d, {"cart", "valkey-cart"}, set(registry.DOWN_SERVICES))
+        self.assertEqual((plan["action_type"], plan["target"]), ("restart_service", "valkey-cart"))
+        self.assertTrue(agent._downstream("checkout") >= {"cart", "valkey-cart", "payment"})
 
     def test_dropped_evidence_caps_confidence(self):
         d = self.run_loop(self.llm(self.GOOD + ["obs-2: payment gateway exploded at 3am"]), diagnose_only=True)

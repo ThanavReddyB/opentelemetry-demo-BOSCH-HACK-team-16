@@ -94,11 +94,17 @@ def inject_flag(candidates, variants, restart_flagd=False):
     variant = next((v for v in variants if v in options), None)
     if not variant:
         die(f"flag {name}: variants {variants} not found. Options: {list(options)}")
-    if "targeting" in flags[name]:
-        print(f"warning: {name} has targeting rules that may override defaultVariant; check it took effect")
     st = load_state()
     st["flags"].setdefault(name, flags[name]["defaultVariant"])  # remember original once
     flags[name]["defaultVariant"] = variant
+    rule = flags[name].get("targeting", {}).get("if")
+    if isinstance(rule, list) and len(rule) == 3:
+        # e.g. productCatalogFailure: {"if": [<product_id == X>, then, else]}; the fault lives in the "then" branch
+        st.setdefault("targeting", {}).setdefault(name, json.loads(json.dumps(flags[name]["targeting"])))
+        rule[1] = variant
+        print(f"note: {name} is targeted; set its matching branch to {variant}")
+    elif "targeting" in flags[name]:
+        print(f"warning: {name} has targeting rules that may override defaultVariant; check it took effect")
     save_flags(data)
     save_state(st)
     if restart_flagd:
@@ -144,6 +150,9 @@ def reset(restart_flagd=False):
             for name, original in st["flags"].items():
                 if name in data["flags"]:
                     data["flags"][name]["defaultVariant"] = original
+            for name, targeting in st.get("targeting", {}).items():
+                if name in data["flags"]:
+                    data["flags"][name]["targeting"] = targeting
             save_flags(data)
             print(f"restored flags: {', '.join(st['flags'])}")
         except Exception as e:  # noqa: BLE001
@@ -164,7 +173,7 @@ def reset(restart_flagd=False):
         except Exception as e:  # noqa: BLE001
             errors.append(f"starved services: {e}")
 
-    if restart_flagd or st["flags"]:
+    if restart_flagd:  # flagd watches the file itself; restart only when asked
         try:
             dc("restart", "flagd")
         except Exception as e:  # noqa: BLE001

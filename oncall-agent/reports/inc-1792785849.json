@@ -1,0 +1,319 @@
+{
+  "incident_id": "inc-1792785849",
+  "status": "Resolved",
+  "alert": "Detector opened an incident. Symptoms: currency: container currency is exited (exit code 137)",
+  "timeline": {
+    "detected_at": "2026-10-23T20:04:09Z",
+    "completed_at": "2026-10-23T20:09:52Z",
+    "tool_calls_count": 4,
+    "rounds": 1
+  },
+  "diagnosis": {
+    "fault_class": "container_crash_or_restart",
+    "failing_component": "currency",
+    "cause": "The currency container stopped (exit code 137) a few minutes ago, making the service unavailable and causing downstream checkout errors.",
+    "confidence": "high",
+    "evidence": [
+      "obs-1: container currency is exited (exit code 137)",
+      "obs-4: container_changes: {\"service\": \"currency\", \"event\": \"stopped\", \"minutes_ago\": 2.7}"
+    ],
+    "dropped_ungrounded_evidence": [],
+    "secondary_findings": [
+      "checkout: high error rate due to missing currency service (error_hotspots shows checkout deadline exceeded traces)"
+    ],
+    "suggested_remedy": "restart a service",
+    "escalate_to_human": false
+  },
+  "action_plan": {
+    "allowed": true,
+    "escalate": false,
+    "incident_id": "inc-1792785849",
+    "proposal_version": 1,
+    "round": 1,
+    "action_type": "restart_service",
+    "target": "currency",
+    "parameters": {
+      "service_name": "currency",
+      "reset_limits": false
+    },
+    "reason": "The currency container stopped (exit code 137) a few minutes ago, making the service unavailable and causing downstream checkout errors.",
+    "rollback": {
+      "reversible": false,
+      "description": "A restart has no natural inverse; if verification fails, escalate to a human."
+    },
+    "policy_note": null,
+    "approval_digest": "2f28eb8e1539431ff560864f042f10b37c23f9ae877245a6cd31115809e24e7c"
+  },
+  "human_approval": {
+    "approved": true,
+    "dry_run": false,
+    "decided_at": "2026-10-23T20:05:25Z",
+    "decided_epoch": 1792785925.584072,
+    "approval_digest": "2f28eb8e1539431ff560864f042f10b37c23f9ae877245a6cd31115809e24e7c",
+    "consumed": true,
+    "operator_input": "yes",
+    "approver": "TEESTA"
+  },
+  "execution": {
+    "executed": true,
+    "status": "success",
+    "action_type": "restart_service",
+    "detail": "Started stopped service currency"
+  },
+  "verification": {
+    "verified": true,
+    "target_recovered": true,
+    "status": "Resolved",
+    "target_service": "currency",
+    "watched_services": [
+      "checkout",
+      "currency",
+      "frontend"
+    ],
+    "passing_samples": 2,
+    "required_samples": 2,
+    "checks": [
+      {
+        "sample": 1,
+        "timestamp": "2026-10-23T20:07:18Z",
+        "passed": true,
+        "target_ok": true,
+        "blind": [],
+        "remaining_anomalies": [],
+        "not_running": [],
+        "still_cpu_capped": [],
+        "stopped_dependencies": [],
+        "no_traffic_seen": false,
+        "other_anomalies": []
+      },
+      {
+        "sample": 2,
+        "timestamp": "2026-10-23T20:08:02Z",
+        "passed": true,
+        "target_ok": true,
+        "blind": [],
+        "remaining_anomalies": [],
+        "not_running": [],
+        "still_cpu_capped": [],
+        "stopped_dependencies": [],
+        "no_traffic_seen": false,
+        "other_anomalies": []
+      }
+    ]
+  },
+  "rounds": [
+    {
+      "round": 1,
+      "alert": "Detector opened an incident. Symptoms: currency: container currency is exited (exit code 137)",
+      "diagnosis": {
+        "fault_class": "container_crash_or_restart",
+        "failing_component": "currency",
+        "cause": "The currency container stopped (exit code 137) a few minutes ago, making the service unavailable and causing downstream checkout errors.",
+        "confidence": "high",
+        "evidence": [
+          "obs-1: container currency is exited (exit code 137)",
+          "obs-4: container_changes: {\"service\": \"currency\", \"event\": \"stopped\", \"minutes_ago\": 2.7}"
+        ],
+        "dropped_ungrounded_evidence": [],
+        "secondary_findings": [
+          "checkout: high error rate due to missing currency service (error_hotspots shows checkout deadline exceeded traces)"
+        ],
+        "suggested_remedy": "restart a service",
+        "escalate_to_human": false
+      },
+      "action_plan": {
+        "allowed": true,
+        "escalate": false,
+        "incident_id": "inc-1792785849",
+        "proposal_version": 1,
+        "round": 1,
+        "action_type": "restart_service",
+        "target": "currency",
+        "parameters": {
+          "service_name": "currency",
+          "reset_limits": false
+        },
+        "reason": "The currency container stopped (exit code 137) a few minutes ago, making the service unavailable and causing downstream checkout errors.",
+        "rollback": {
+          "reversible": false,
+          "description": "A restart has no natural inverse; if verification fails, escalate to a human."
+        },
+        "policy_note": null,
+        "approval_digest": "2f28eb8e1539431ff560864f042f10b37c23f9ae877245a6cd31115809e24e7c"
+      },
+      "human_approval": {
+        "approved": true,
+        "dry_run": false,
+        "decided_at": "2026-10-23T20:05:25Z",
+        "decided_epoch": 1792785925.584072,
+        "approval_digest": "2f28eb8e1539431ff560864f042f10b37c23f9ae877245a6cd31115809e24e7c",
+        "consumed": true,
+        "operator_input": "yes",
+        "approver": "TEESTA"
+      },
+      "execution": {
+        "executed": true,
+        "status": "success",
+        "action_type": "restart_service",
+        "detail": "Started stopped service currency"
+      },
+      "verification": {
+        "verified": true,
+        "target_recovered": true,
+        "status": "Resolved",
+        "target_service": "currency",
+        "watched_services": [
+          "checkout",
+          "currency",
+          "frontend"
+        ],
+        "passing_samples": 2,
+        "required_samples": 2,
+        "checks": [
+          {
+            "sample": 1,
+            "timestamp": "2026-10-23T20:07:18Z",
+            "passed": true,
+            "target_ok": true,
+            "blind": [],
+            "remaining_anomalies": [],
+            "not_running": [],
+            "still_cpu_capped": [],
+            "stopped_dependencies": [],
+            "no_traffic_seen": false,
+            "other_anomalies": []
+          },
+          {
+            "sample": 2,
+            "timestamp": "2026-10-23T20:08:02Z",
+            "passed": true,
+            "target_ok": true,
+            "blind": [],
+            "remaining_anomalies": [],
+            "not_running": [],
+            "still_cpu_capped": [],
+            "stopped_dependencies": [],
+            "no_traffic_seen": false,
+            "other_anomalies": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "id": "obs-1",
+          "timestamp": "2026-10-23T20:04:28Z",
+          "tool": "triage",
+          "args": {
+            "window_min": 5
+          },
+          "finding": "7 anomalies: currency request rate 0.02/s (baseline 0.12/s); checkout error rate 50.0% (baseline 0.0%) | DOWN: currency",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-1\", \"window_min\": 5, \"baseline_offsets_min\": [15, 45], \"anomalies\": [{\"type\": \"traffic_drop_or_service_gone\", \"service\": \"currency\", \"score\": 90.0, \"detail\": \"request rate 0.02/s (baseline 0.12/s)\"}, {\"type\": \"error_rate\", \"service\": \"checkout\", \"score\": 50.0, \"detail\": \"error rate 50.0% (baseline 0.0%)\"}, {\"type\": \"operation_error_rate\", \"service\": \"checkout\", \"operation\": \"oteldemo.CheckoutService/PlaceOrder\", \"score\": 50.0, \"detail\": \"operation oteldemo.CheckoutService/PlaceOrder",
+          "round": 1
+        },
+        {
+          "id": "obs-2",
+          "timestamp": "2026-10-23T20:04:38Z",
+          "tool": "error_hotspots",
+          "args": {
+            "minutes": 15,
+            "service": "currency"
+          },
+          "finding": "6/22 traces errored; root: checkout POST 'context deadline exceeded'",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-2\", \"service_queried\": \"currency\", \"window_min\": 15, \"traces_checked\": 22, \"errored_traces\": 6, \"root_error_hotspots\": [{\"service\": \"checkout\", \"operation\": \"POST\", \"message\": \"context deadline exceeded\", \"count\": 5, \"example_traces\": [\"96d50819834c61e61b299eb372163a01\", \"0a8f527e3a4079c8d2130f57e2e22783\"]}, {\"service\": \"frontend-proxy\", \"operation\": \"router frontend egress\", \"message\": \"\", \"count\": 1, \"example_traces\": [\"5c820a6cfaa85ef78b2daf53595722ad\"]}]}",
+          "round": 1
+        },
+        {
+          "id": "obs-3",
+          "timestamp": "2026-10-23T20:04:43Z",
+          "tool": "get_logs",
+          "args": {
+            "minutes": 10,
+            "service": "currency"
+          },
+          "finding": "0 error lines in 1",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-3\", \"service\": \"currency\", \"window_min\": 10, \"lines\": 1, \"error_lines\": 0, \"top_patterns\": []}",
+          "round": 1
+        },
+        {
+          "id": "obs-4",
+          "timestamp": "2026-10-23T20:04:57Z",
+          "tool": "deploy_history",
+          "args": {
+            "minutes": 60
+          },
+          "finding": "2 recent container changes: currency stopped 2.7m ago, valkey-cart started 31.6m ago",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-4\", \"window_min\": 60, \"container_changes\": [{\"service\": \"currency\", \"event\": \"stopped\", \"minutes_ago\": 2.7, \"image\": \"demo:latest-currency\"}, {\"service\": \"valkey-cart\", \"event\": \"started\", \"minutes_ago\": 31.6, \"image\": \"valkey:9.1.2-alpine3.24\"}], \"recent_agent_actions\": [{\"event\": \"action_executed\", \"action_type\": \"restart_service\", \"target\": \"valkey-cart\", \"status\": \"success\", \"minutes_ago\": 52.2}, {\"event\": \"action_executed\", \"action_type\": \"restart_service\", \"target\": \"valkey-ca",
+          "round": 1
+        }
+      ]
+    }
+  ],
+  "prevention_recommendation": [
+    "Alert at 80% of the memory limit and enforce liveness/readiness probes."
+  ],
+  "observations": [
+    {
+      "id": "obs-1",
+      "timestamp": "2026-10-23T20:04:28Z",
+      "tool": "triage",
+      "args": {
+        "window_min": 5
+      },
+      "finding": "7 anomalies: currency request rate 0.02/s (baseline 0.12/s); checkout error rate 50.0% (baseline 0.0%) | DOWN: currency",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-1\", \"window_min\": 5, \"baseline_offsets_min\": [15, 45], \"anomalies\": [{\"type\": \"traffic_drop_or_service_gone\", \"service\": \"currency\", \"score\": 90.0, \"detail\": \"request rate 0.02/s (baseline 0.12/s)\"}, {\"type\": \"error_rate\", \"service\": \"checkout\", \"score\": 50.0, \"detail\": \"error rate 50.0% (baseline 0.0%)\"}, {\"type\": \"operation_error_rate\", \"service\": \"checkout\", \"operation\": \"oteldemo.CheckoutService/PlaceOrder\", \"score\": 50.0, \"detail\": \"operation oteldemo.CheckoutService/PlaceOrder",
+      "round": 1
+    },
+    {
+      "id": "obs-2",
+      "timestamp": "2026-10-23T20:04:38Z",
+      "tool": "error_hotspots",
+      "args": {
+        "minutes": 15,
+        "service": "currency"
+      },
+      "finding": "6/22 traces errored; root: checkout POST 'context deadline exceeded'",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-2\", \"service_queried\": \"currency\", \"window_min\": 15, \"traces_checked\": 22, \"errored_traces\": 6, \"root_error_hotspots\": [{\"service\": \"checkout\", \"operation\": \"POST\", \"message\": \"context deadline exceeded\", \"count\": 5, \"example_traces\": [\"96d50819834c61e61b299eb372163a01\", \"0a8f527e3a4079c8d2130f57e2e22783\"]}, {\"service\": \"frontend-proxy\", \"operation\": \"router frontend egress\", \"message\": \"\", \"count\": 1, \"example_traces\": [\"5c820a6cfaa85ef78b2daf53595722ad\"]}]}",
+      "round": 1
+    },
+    {
+      "id": "obs-3",
+      "timestamp": "2026-10-23T20:04:43Z",
+      "tool": "get_logs",
+      "args": {
+        "minutes": 10,
+        "service": "currency"
+      },
+      "finding": "0 error lines in 1",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-3\", \"service\": \"currency\", \"window_min\": 10, \"lines\": 1, \"error_lines\": 0, \"top_patterns\": []}",
+      "round": 1
+    },
+    {
+      "id": "obs-4",
+      "timestamp": "2026-10-23T20:04:57Z",
+      "tool": "deploy_history",
+      "args": {
+        "minutes": 60
+      },
+      "finding": "2 recent container changes: currency stopped 2.7m ago, valkey-cart started 31.6m ago",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-4\", \"window_min\": 60, \"container_changes\": [{\"service\": \"currency\", \"event\": \"stopped\", \"minutes_ago\": 2.7, \"image\": \"demo:latest-currency\"}, {\"service\": \"valkey-cart\", \"event\": \"started\", \"minutes_ago\": 31.6, \"image\": \"valkey:9.1.2-alpine3.24\"}], \"recent_agent_actions\": [{\"event\": \"action_executed\", \"action_type\": \"restart_service\", \"target\": \"valkey-cart\", \"status\": \"success\", \"minutes_ago\": 52.2}, {\"event\": \"action_executed\", \"action_type\": \"restart_service\", \"target\": \"valkey-ca",
+      "round": 1
+    }
+  ],
+  "llm_usage": [
+    {
+      "provider": "groq:openai/gpt-oss-120b",
+      "calls": 6,
+      "tokens": 13212,
+      "daily_quota_hit": false
+    }
+  ],
+  "remaining_symptoms": []
+}

@@ -1,0 +1,433 @@
+{
+  "incident_id": "inc-1792775454",
+  "status": "Resolved",
+  "alert": "Detector opened an incident. Symptoms: shipping: p95 6570ms; email: p95 13242ms; checkout: p95 15000ms; quote: p95 1219ms (+1 more)",
+  "timeline": {
+    "detected_at": "2026-10-23T17:10:54Z",
+    "completed_at": "2026-10-23T17:17:31Z",
+    "tool_calls_count": 8,
+    "rounds": 1
+  },
+  "diagnosis": {
+    "fault_class": "app_error",
+    "failing_component": "payment",
+    "cause": "Payment service is experiencing a high error rate (\u224878%) and elevated latency, causing checkout failures.",
+    "confidence": "medium",
+    "evidence": [
+      "obs-4: checkout PlaceOrder p95 15000ms",
+      "obs-5: checkout PaymentService/Charge error_rate 70.65%",
+      "obs-6: payment charge error_rate 77.78% and tcp.connect errors"
+    ],
+    "dropped_ungrounded_evidence": [
+      "obs-7: 9 warning log lines in payment over last 15\u202fmin indicating repeated failures"
+    ],
+    "secondary_findings": [
+      "checkout: high latency and errors due to payment failures",
+      "shipping: elevated latency likely downstream impact",
+      "email: elevated latency likely downstream impact"
+    ],
+    "suggested_remedy": "restart a service",
+    "escalate_to_human": false
+  },
+  "action_plan": {
+    "allowed": true,
+    "escalate": false,
+    "incident_id": "inc-1792775454",
+    "proposal_version": 1,
+    "round": 1,
+    "action_type": "toggle_feature_flag",
+    "target": "payment",
+    "parameters": {
+      "flag_name": "paymentFailure",
+      "variant": "off",
+      "service": "payment"
+    },
+    "reason": "Payment service is experiencing a high error rate (\u224878%) and elevated latency, causing checkout failures.",
+    "rollback": {
+      "reversible": true,
+      "description": "Restore 'paymentFailure' to its previous variant if verification fails."
+    },
+    "policy_note": "Runbook override: agent suggested restart_service, policy chose toggle_feature_flag for (payment, app_error).",
+    "approval_digest": "ce0f4214de530cd143fb2326bb01ca33fa169e1c69598be9294f34b4e1444aa5"
+  },
+  "human_approval": {
+    "approved": true,
+    "dry_run": false,
+    "decided_at": "2026-10-23T17:14:27Z",
+    "decided_epoch": 1792775667.1937878,
+    "approval_digest": "ce0f4214de530cd143fb2326bb01ca33fa169e1c69598be9294f34b4e1444aa5",
+    "consumed": true,
+    "operator_input": "yes",
+    "approver": "testbench"
+  },
+  "execution": {
+    "executed": true,
+    "status": "success",
+    "action_type": "toggle_feature_flag",
+    "previous_variant": "100%",
+    "detail": "Set paymentFailure -> off (was 100%)"
+  },
+  "verification": {
+    "verified": true,
+    "target_recovered": true,
+    "status": "Resolved",
+    "target_service": "payment",
+    "watched_services": [
+      "checkout",
+      "payment"
+    ],
+    "passing_samples": 2,
+    "required_samples": 2,
+    "checks": [
+      {
+        "sample": 1,
+        "timestamp": "2026-10-23T17:16:49Z",
+        "passed": true,
+        "target_ok": true,
+        "blind": [],
+        "remaining_anomalies": [],
+        "not_running": [],
+        "still_cpu_capped": [],
+        "other_anomalies": []
+      },
+      {
+        "sample": 2,
+        "timestamp": "2026-10-23T17:17:31Z",
+        "passed": true,
+        "target_ok": true,
+        "blind": [],
+        "remaining_anomalies": [],
+        "not_running": [],
+        "still_cpu_capped": [],
+        "other_anomalies": []
+      }
+    ]
+  },
+  "rounds": [
+    {
+      "round": 1,
+      "alert": "Detector opened an incident. Symptoms: shipping: p95 6570ms; email: p95 13242ms; checkout: p95 15000ms; quote: p95 1219ms (+1 more)",
+      "diagnosis": {
+        "fault_class": "app_error",
+        "failing_component": "payment",
+        "cause": "Payment service is experiencing a high error rate (\u224878%) and elevated latency, causing checkout failures.",
+        "confidence": "medium",
+        "evidence": [
+          "obs-4: checkout PlaceOrder p95 15000ms",
+          "obs-5: checkout PaymentService/Charge error_rate 70.65%",
+          "obs-6: payment charge error_rate 77.78% and tcp.connect errors"
+        ],
+        "dropped_ungrounded_evidence": [
+          "obs-7: 9 warning log lines in payment over last 15\u202fmin indicating repeated failures"
+        ],
+        "secondary_findings": [
+          "checkout: high latency and errors due to payment failures",
+          "shipping: elevated latency likely downstream impact",
+          "email: elevated latency likely downstream impact"
+        ],
+        "suggested_remedy": "restart a service",
+        "escalate_to_human": false
+      },
+      "action_plan": {
+        "allowed": true,
+        "escalate": false,
+        "incident_id": "inc-1792775454",
+        "proposal_version": 1,
+        "round": 1,
+        "action_type": "toggle_feature_flag",
+        "target": "payment",
+        "parameters": {
+          "flag_name": "paymentFailure",
+          "variant": "off",
+          "service": "payment"
+        },
+        "reason": "Payment service is experiencing a high error rate (\u224878%) and elevated latency, causing checkout failures.",
+        "rollback": {
+          "reversible": true,
+          "description": "Restore 'paymentFailure' to its previous variant if verification fails."
+        },
+        "policy_note": "Runbook override: agent suggested restart_service, policy chose toggle_feature_flag for (payment, app_error).",
+        "approval_digest": "ce0f4214de530cd143fb2326bb01ca33fa169e1c69598be9294f34b4e1444aa5"
+      },
+      "human_approval": {
+        "approved": true,
+        "dry_run": false,
+        "decided_at": "2026-10-23T17:14:27Z",
+        "decided_epoch": 1792775667.1937878,
+        "approval_digest": "ce0f4214de530cd143fb2326bb01ca33fa169e1c69598be9294f34b4e1444aa5",
+        "consumed": true,
+        "operator_input": "yes",
+        "approver": "testbench"
+      },
+      "execution": {
+        "executed": true,
+        "status": "success",
+        "action_type": "toggle_feature_flag",
+        "previous_variant": "100%",
+        "detail": "Set paymentFailure -> off (was 100%)"
+      },
+      "verification": {
+        "verified": true,
+        "target_recovered": true,
+        "status": "Resolved",
+        "target_service": "payment",
+        "watched_services": [
+          "checkout",
+          "payment"
+        ],
+        "passing_samples": 2,
+        "required_samples": 2,
+        "checks": [
+          {
+            "sample": 1,
+            "timestamp": "2026-10-23T17:16:49Z",
+            "passed": true,
+            "target_ok": true,
+            "blind": [],
+            "remaining_anomalies": [],
+            "not_running": [],
+            "still_cpu_capped": [],
+            "other_anomalies": []
+          },
+          {
+            "sample": 2,
+            "timestamp": "2026-10-23T17:17:31Z",
+            "passed": true,
+            "target_ok": true,
+            "blind": [],
+            "remaining_anomalies": [],
+            "not_running": [],
+            "still_cpu_capped": [],
+            "other_anomalies": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "id": "obs-1",
+          "timestamp": "2026-10-23T17:11:37Z",
+          "tool": "triage",
+          "args": {
+            "window_min": 5
+          },
+          "finding": "11 anomalies: email p95 12994ms; checkout p95 15000ms",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-1\", \"window_min\": 5, \"baseline_offsets_min\": [15, 30, 60], \"anomalies\": [{\"type\": \"latency\", \"service\": \"email\", \"score\": 100, \"detail\": \"p95 12994ms\"}, {\"type\": \"latency\", \"service\": \"checkout\", \"score\": 100, \"detail\": \"p95 15000ms\"}, {\"type\": \"traffic_surge\", \"service\": \"product-catalog\", \"score\": 100, \"detail\": \"request rate 0.60/s (baseline 0.05/s)\"}, {\"type\": \"latency\", \"service\": \"payment\", \"score\": 100, \"detail\": \"p95 8666ms\"}, {\"type\": \"traffic_drop_or_service_gone\", \"servic",
+          "round": 1
+        },
+        {
+          "id": "obs-2",
+          "timestamp": "2026-10-23T17:11:50Z",
+          "tool": "error_hotspots",
+          "args": {
+            "minutes": 15,
+            "service": "checkout"
+          },
+          "finding": "tool error: RuntimeError: Jaeger query API not reachable. Tried: http://localhost:8080/jaeger/ui/api/...",
+          "empty": true,
+          "output_preview": "{\"obs\": \"obs-2\", \"tool_error\": \"RuntimeError: Jaeger query API not reachable. Tried: http://localhost:8080/jaeger/ui/api/v3 -> ReadTimeout; http://localhost:16686/api/v3 -> ConnectionError; http://localhost:8080/jaeger/ui/api -> HTTP 404; http://localhost:16686/api -> ConnectionError. Set JAEGER_API.\", \"evidence_note\": \"this result is empty or failed: it is not evidence of anything\"}",
+          "round": 1
+        },
+        {
+          "id": "obs-3",
+          "timestamp": "2026-10-23T17:12:25Z",
+          "tool": "container_health",
+          "args": {},
+          "finding": "20 running, hot ['ad cpu 5.89% mem 76.07%', 'astronomy-db cpu 15.1% mem 86.19%']",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-3\", \"total\": 20, \"running\": [\"ad\", \"astronomy-db\", \"cart\", \"checkout\", \"currency\", \"email\", \"frontend\", \"frontend-proxy\", \"image-provider\", \"jaeger\", \"load-generator\", \"opamp-server\", \"otel-collector\", \"payment\", \"product-catalog\", \"prometheus\", \"quote\", \"recommendation\", \"shipping\", \"valkey-cart\"], \"not_running\": [], \"restarts_or_oom\": [], \"hot\": [{\"service\": \"ad\", \"cpu_pct\": 5.89, \"mem_pct_of_limit\": 76.07}, {\"service\": \"astronomy-db\", \"cpu_pct\": 15.1, \"mem_pct_of_limit\": 86.19}, ",
+          "round": 1
+        },
+        {
+          "id": "obs-4",
+          "timestamp": "2026-10-23T17:12:30Z",
+          "tool": "get_metrics",
+          "args": {
+            "metric": "latency_p95",
+            "service": "checkout",
+            "window": "5m"
+          },
+          "finding": "latency_p95 ok; top: {\"service\": \"checkout\", \"operation\": \"oteldemo.CheckoutService/PlaceOrder\", \"p95_ms\": 15000.0}",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-4\", \"tool\": \"get_metrics\", \"metric\": \"latency_p95\", \"window\": \"5m\", \"status\": \"ok\", \"rows\": [{\"service\": \"checkout\", \"operation\": \"oteldemo.CheckoutService/PlaceOrder\", \"p95_ms\": 15000.0}, {\"service\": \"checkout\", \"operation\": \"oteldemo.PaymentService/Charge\", \"p95_ms\": 15000.0}, {\"service\": \"checkout\", \"operation\": \"prepareOrderItemsAndShippingQuoteFromCart\", \"p95_ms\": 9125.0}, {\"service\": \"checkout\", \"operation\": \"oteldemo.ProductCatalogService/GetProduct\", \"p95_ms\": 6750.0}, {\"ser",
+          "round": 1
+        },
+        {
+          "id": "obs-5",
+          "timestamp": "2026-10-23T17:12:32Z",
+          "tool": "get_metrics",
+          "args": {
+            "metric": "error_rate",
+            "service": "checkout",
+            "window": "5m"
+          },
+          "finding": "error_rate ok; top: {\"service\": \"checkout\", \"operation\": \"oteldemo.PaymentService/Charge\", \"errors_per_s\": 0.025, \"calls_per_s\": 0.0355, \"e...",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-5\", \"tool\": \"get_metrics\", \"metric\": \"error_rate\", \"window\": \"5m\", \"status\": \"ok\", \"rows\": [{\"service\": \"checkout\", \"operation\": \"oteldemo.PaymentService/Charge\", \"errors_per_s\": 0.025, \"calls_per_s\": 0.0355, \"error_pct\": 70.65}, {\"service\": \"checkout\", \"operation\": \"oteldemo.CheckoutService/PlaceOrder\", \"errors_per_s\": 0.025, \"calls_per_s\": 0.0355, \"error_pct\": 70.65}], \"queries\": [\"sum by (service_name, span_name) (rate(traces_span_metrics_calls_total{service_name!~\\\"flagd|flagd-u",
+          "round": 1
+        },
+        {
+          "id": "obs-6",
+          "timestamp": "2026-10-23T17:13:07Z",
+          "tool": "get_metrics",
+          "args": {
+            "metric": "error_rate",
+            "service": "payment",
+            "window": "5m"
+          },
+          "finding": "error_rate ok; top: {\"service\": \"payment\", \"operation\": \"charge\", \"errors_per_s\": 0.0274, \"calls_per_s\": 0.0352, \"error_pct\": 77.78}",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-6\", \"tool\": \"get_metrics\", \"metric\": \"error_rate\", \"window\": \"5m\", \"status\": \"ok\", \"rows\": [{\"service\": \"payment\", \"operation\": \"charge\", \"errors_per_s\": 0.0274, \"calls_per_s\": 0.0352, \"error_pct\": 77.78}, {\"service\": \"payment\", \"operation\": \"oteldemo.PaymentService/Charge\", \"errors_per_s\": 0.0274, \"calls_per_s\": 0.0352, \"error_pct\": 77.78}, {\"service\": \"payment\", \"operation\": \"tcp.connect\", \"errors_per_s\": 0.0245, \"calls_per_s\": 0.032, \"error_pct\": 76.4}], \"queries\": [\"sum by (serv",
+          "round": 1
+        },
+        {
+          "id": "obs-7",
+          "timestamp": "2026-10-23T17:13:42Z",
+          "tool": "get_logs",
+          "args": {
+            "minutes": 15,
+            "service": "payment"
+          },
+          "finding": "9 error lines in 28; top: '{\"level\":\"warn\",\"time\":1792775175921,\"pid\":1,\"hostname\":\"51209e4e53f6\",\"trace_id\":\"c566ba87380a8aff02d42b850bf75...",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-7\", \"service\": \"payment\", \"window_min\": 15, \"lines\": 28, \"error_lines\": 9, \"top_patterns\": [{\"count\": 9, \"example\": \"{\\\"level\\\":\\\"warn\\\",\\\"time\\\":1792775175921,\\\"pid\\\":1,\\\"hostname\\\":\\\"51209e4e53f6\\\",\\\"trace_id\\\":\\\"c566ba87380a8aff02d42b850bf75c2f\\\",\\\"span_id\\\":\\\"812689f643a75272\\\",\\\"trace_flags\\\":\"}]}",
+          "round": 1
+        },
+        {
+          "id": "obs-8",
+          "timestamp": "2026-10-23T17:14:12Z",
+          "tool": "deploy_history",
+          "args": {
+            "minutes": 60
+          },
+          "finding": "15 recent container changes: load-generator started 11.1m ago, load-generator created 13.5m ago, frontend-proxy started 34.7m ago",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-8\", \"window_min\": 60, \"container_changes\": [{\"service\": \"load-generator\", \"event\": \"started\", \"minutes_ago\": 11.1, \"image\": \"demo:latest-load-generator\"}, {\"service\": \"load-generator\", \"event\": \"created\", \"minutes_ago\": 13.5, \"image\": \"demo:latest-load-generator\"}, {\"service\": \"frontend-proxy\", \"event\": \"started\", \"minutes_ago\": 34.7, \"image\": \"demo:latest-frontend-proxy\"}, {\"service\": \"frontend\", \"event\": \"started\", \"minutes_ago\": 36.4, \"image\": \"demo:latest-frontend\"}, {\"service\":",
+          "round": 1
+        }
+      ]
+    }
+  ],
+  "prevention_recommendation": [
+    "Add canary checks and automatic rollback for faulty releases; alert on per-operation error rate."
+  ],
+  "observations": [
+    {
+      "id": "obs-1",
+      "timestamp": "2026-10-23T17:11:37Z",
+      "tool": "triage",
+      "args": {
+        "window_min": 5
+      },
+      "finding": "11 anomalies: email p95 12994ms; checkout p95 15000ms",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-1\", \"window_min\": 5, \"baseline_offsets_min\": [15, 30, 60], \"anomalies\": [{\"type\": \"latency\", \"service\": \"email\", \"score\": 100, \"detail\": \"p95 12994ms\"}, {\"type\": \"latency\", \"service\": \"checkout\", \"score\": 100, \"detail\": \"p95 15000ms\"}, {\"type\": \"traffic_surge\", \"service\": \"product-catalog\", \"score\": 100, \"detail\": \"request rate 0.60/s (baseline 0.05/s)\"}, {\"type\": \"latency\", \"service\": \"payment\", \"score\": 100, \"detail\": \"p95 8666ms\"}, {\"type\": \"traffic_drop_or_service_gone\", \"servic",
+      "round": 1
+    },
+    {
+      "id": "obs-2",
+      "timestamp": "2026-10-23T17:11:50Z",
+      "tool": "error_hotspots",
+      "args": {
+        "minutes": 15,
+        "service": "checkout"
+      },
+      "finding": "tool error: RuntimeError: Jaeger query API not reachable. Tried: http://localhost:8080/jaeger/ui/api/...",
+      "empty": true,
+      "output_preview": "{\"obs\": \"obs-2\", \"tool_error\": \"RuntimeError: Jaeger query API not reachable. Tried: http://localhost:8080/jaeger/ui/api/v3 -> ReadTimeout; http://localhost:16686/api/v3 -> ConnectionError; http://localhost:8080/jaeger/ui/api -> HTTP 404; http://localhost:16686/api -> ConnectionError. Set JAEGER_API.\", \"evidence_note\": \"this result is empty or failed: it is not evidence of anything\"}",
+      "round": 1
+    },
+    {
+      "id": "obs-3",
+      "timestamp": "2026-10-23T17:12:25Z",
+      "tool": "container_health",
+      "args": {},
+      "finding": "20 running, hot ['ad cpu 5.89% mem 76.07%', 'astronomy-db cpu 15.1% mem 86.19%']",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-3\", \"total\": 20, \"running\": [\"ad\", \"astronomy-db\", \"cart\", \"checkout\", \"currency\", \"email\", \"frontend\", \"frontend-proxy\", \"image-provider\", \"jaeger\", \"load-generator\", \"opamp-server\", \"otel-collector\", \"payment\", \"product-catalog\", \"prometheus\", \"quote\", \"recommendation\", \"shipping\", \"valkey-cart\"], \"not_running\": [], \"restarts_or_oom\": [], \"hot\": [{\"service\": \"ad\", \"cpu_pct\": 5.89, \"mem_pct_of_limit\": 76.07}, {\"service\": \"astronomy-db\", \"cpu_pct\": 15.1, \"mem_pct_of_limit\": 86.19}, ",
+      "round": 1
+    },
+    {
+      "id": "obs-4",
+      "timestamp": "2026-10-23T17:12:30Z",
+      "tool": "get_metrics",
+      "args": {
+        "metric": "latency_p95",
+        "service": "checkout",
+        "window": "5m"
+      },
+      "finding": "latency_p95 ok; top: {\"service\": \"checkout\", \"operation\": \"oteldemo.CheckoutService/PlaceOrder\", \"p95_ms\": 15000.0}",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-4\", \"tool\": \"get_metrics\", \"metric\": \"latency_p95\", \"window\": \"5m\", \"status\": \"ok\", \"rows\": [{\"service\": \"checkout\", \"operation\": \"oteldemo.CheckoutService/PlaceOrder\", \"p95_ms\": 15000.0}, {\"service\": \"checkout\", \"operation\": \"oteldemo.PaymentService/Charge\", \"p95_ms\": 15000.0}, {\"service\": \"checkout\", \"operation\": \"prepareOrderItemsAndShippingQuoteFromCart\", \"p95_ms\": 9125.0}, {\"service\": \"checkout\", \"operation\": \"oteldemo.ProductCatalogService/GetProduct\", \"p95_ms\": 6750.0}, {\"ser",
+      "round": 1
+    },
+    {
+      "id": "obs-5",
+      "timestamp": "2026-10-23T17:12:32Z",
+      "tool": "get_metrics",
+      "args": {
+        "metric": "error_rate",
+        "service": "checkout",
+        "window": "5m"
+      },
+      "finding": "error_rate ok; top: {\"service\": \"checkout\", \"operation\": \"oteldemo.PaymentService/Charge\", \"errors_per_s\": 0.025, \"calls_per_s\": 0.0355, \"e...",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-5\", \"tool\": \"get_metrics\", \"metric\": \"error_rate\", \"window\": \"5m\", \"status\": \"ok\", \"rows\": [{\"service\": \"checkout\", \"operation\": \"oteldemo.PaymentService/Charge\", \"errors_per_s\": 0.025, \"calls_per_s\": 0.0355, \"error_pct\": 70.65}, {\"service\": \"checkout\", \"operation\": \"oteldemo.CheckoutService/PlaceOrder\", \"errors_per_s\": 0.025, \"calls_per_s\": 0.0355, \"error_pct\": 70.65}], \"queries\": [\"sum by (service_name, span_name) (rate(traces_span_metrics_calls_total{service_name!~\\\"flagd|flagd-u",
+      "round": 1
+    },
+    {
+      "id": "obs-6",
+      "timestamp": "2026-10-23T17:13:07Z",
+      "tool": "get_metrics",
+      "args": {
+        "metric": "error_rate",
+        "service": "payment",
+        "window": "5m"
+      },
+      "finding": "error_rate ok; top: {\"service\": \"payment\", \"operation\": \"charge\", \"errors_per_s\": 0.0274, \"calls_per_s\": 0.0352, \"error_pct\": 77.78}",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-6\", \"tool\": \"get_metrics\", \"metric\": \"error_rate\", \"window\": \"5m\", \"status\": \"ok\", \"rows\": [{\"service\": \"payment\", \"operation\": \"charge\", \"errors_per_s\": 0.0274, \"calls_per_s\": 0.0352, \"error_pct\": 77.78}, {\"service\": \"payment\", \"operation\": \"oteldemo.PaymentService/Charge\", \"errors_per_s\": 0.0274, \"calls_per_s\": 0.0352, \"error_pct\": 77.78}, {\"service\": \"payment\", \"operation\": \"tcp.connect\", \"errors_per_s\": 0.0245, \"calls_per_s\": 0.032, \"error_pct\": 76.4}], \"queries\": [\"sum by (serv",
+      "round": 1
+    },
+    {
+      "id": "obs-7",
+      "timestamp": "2026-10-23T17:13:42Z",
+      "tool": "get_logs",
+      "args": {
+        "minutes": 15,
+        "service": "payment"
+      },
+      "finding": "9 error lines in 28; top: '{\"level\":\"warn\",\"time\":1792775175921,\"pid\":1,\"hostname\":\"51209e4e53f6\",\"trace_id\":\"c566ba87380a8aff02d42b850bf75...",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-7\", \"service\": \"payment\", \"window_min\": 15, \"lines\": 28, \"error_lines\": 9, \"top_patterns\": [{\"count\": 9, \"example\": \"{\\\"level\\\":\\\"warn\\\",\\\"time\\\":1792775175921,\\\"pid\\\":1,\\\"hostname\\\":\\\"51209e4e53f6\\\",\\\"trace_id\\\":\\\"c566ba87380a8aff02d42b850bf75c2f\\\",\\\"span_id\\\":\\\"812689f643a75272\\\",\\\"trace_flags\\\":\"}]}",
+      "round": 1
+    },
+    {
+      "id": "obs-8",
+      "timestamp": "2026-10-23T17:14:12Z",
+      "tool": "deploy_history",
+      "args": {
+        "minutes": 60
+      },
+      "finding": "15 recent container changes: load-generator started 11.1m ago, load-generator created 13.5m ago, frontend-proxy started 34.7m ago",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-8\", \"window_min\": 60, \"container_changes\": [{\"service\": \"load-generator\", \"event\": \"started\", \"minutes_ago\": 11.1, \"image\": \"demo:latest-load-generator\"}, {\"service\": \"load-generator\", \"event\": \"created\", \"minutes_ago\": 13.5, \"image\": \"demo:latest-load-generator\"}, {\"service\": \"frontend-proxy\", \"event\": \"started\", \"minutes_ago\": 34.7, \"image\": \"demo:latest-frontend-proxy\"}, {\"service\": \"frontend\", \"event\": \"started\", \"minutes_ago\": 36.4, \"image\": \"demo:latest-frontend\"}, {\"service\":",
+      "round": 1
+    }
+  ],
+  "llm_usage": [
+    {
+      "provider": "groq:openai/gpt-oss-120b",
+      "calls": 8,
+      "tokens": 18898,
+      "daily_quota_hit": true
+    },
+    {
+      "provider": "groq:openai/gpt-oss-20b",
+      "calls": 2,
+      "tokens": 6739,
+      "daily_quota_hit": false
+    }
+  ],
+  "remaining_symptoms": []
+}

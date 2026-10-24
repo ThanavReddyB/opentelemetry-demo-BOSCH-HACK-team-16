@@ -44,9 +44,8 @@ BASE_FILTER = f'service_name!~"{"|".join(EXCLUDED_SERVICES)}",span_name!~"{EXCLU
 # Traffic sources are not diagnosis targets; rows from them are annotated.
 TRAFFIC_SOURCES = ("load-generator",)
 
-# UNVERIFIED: label that identifies the service on container_* metrics.
-# Check with:  (Invoke-RestMethod "http://localhost:9090/api/v1/query?query=container_cpu_utilization_ratio").data.result[0].metric
-CONTAINER_LABEL = os.getenv("CONTAINER_LABEL", "service_name")
+# Label that identifies the service on container_* metrics (verified: the docker_stats receiver sets container_name).
+CONTAINER_LABEL = os.getenv("CONTAINER_LABEL", "container_name")
 
 _WINDOW_RE = re.compile(r"^\d{1,3}[smh]$")
 _SERVICE_RE = re.compile(r"^[a-z0-9][a-z0-9\-]{0,62}$")
@@ -209,18 +208,14 @@ TOOL_SPEC = {
     "type": "function",
     "function": {
         "name": "get_metrics",
-        "description": (
-            "Read-only metrics from Prometheus. error_rate: failing operations with errors/s and error %, "
-            "worst first (only operations with errors are listed). latency_p95: slowest operations. "
-            "request_rate: calls/s per service. cpu / memory: container utilisation ratio per service. "
-            "Optionally restrict to one service. status 'no_data' means the query failed, not that the value is zero."
-        ),
+        "description": ("Prometheus view for all services or one: error_rate (failing operations, worst first), "
+                        "latency_p95, request_rate, cpu, memory. status no_data = failed query, not zero."),
         "parameters": {
             "type": "object",
             "properties": {
                 "metric": {"type": "string", "enum": sorted(METRICS)},
-                "service": {"type": "string", "description": "service name, e.g. checkout (optional)"},
-                "window": {"type": "string", "description": "lookback like 5m, 15m, 1h (default 5m)"},
+                "service": {"type": "string"},
+                "window": {"type": "string", "description": "e.g. 5m"},
             },
             "required": ["metric"],
         },

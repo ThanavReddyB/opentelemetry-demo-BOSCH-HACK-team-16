@@ -23,6 +23,7 @@ import base64
 import json
 import os
 import re
+import subprocess
 import sys
 import time
 from collections import Counter, defaultdict
@@ -31,7 +32,9 @@ import requests
 
 import fairplay
 
-FETCH_LIMIT = int(os.environ.get("JAEGER_FETCH_LIMIT", "100"))
+# 40 traces is already ~2 MB of OTLP JSON; on a loaded laptop 100 regularly timed out.
+FETCH_LIMIT = int(os.environ.get("JAEGER_FETCH_LIMIT", "30"))
+TIMEOUT_S = int(os.environ.get("JAEGER_TIMEOUT_S", "45"))
 CANDIDATE_BASES = [
     b.rstrip("/")
     for b in (
@@ -54,14 +57,25 @@ _RESOLVED = None  # (base, mode)
 
 
 # ------------------------------------------------------------------ HTTP / base resolution
+def _direct_base():
+    """Jaeger's own published port (random on every start). Going direct skips the shop proxy and its 15 s route timeout."""
+    try:
+        import ops_tools  # read-only helper for the docker binary
+        out = subprocess.run([ops_tools.DOCKER, "port", "jaeger", "16686"], capture_output=True, text=True, timeout=10).stdout
+        return f"http://localhost:{out.strip().splitlines()[0].rsplit(':', 1)[1]}/jaeger/ui/api/v3"
+    except Exception:  # noqa: BLE001 - fall back to the proxy candidates
+        return None
+
+
 def _resolve():
     global _RESOLVED
     if _RESOLVED:
         return _RESOLVED
-    tried = []
-    for base in CANDIDATE_BASES:
+    tried, direct = [], _direct_base()
+    bases = ([CANDIDATE_BASES[0]] if os.environ.get("JAEGER_API") else []) + ([direct] if direct else []) + CANDIDATE_BASES
+    for base in list(dict.fromkeys(bases)) * 2:  # a second pass rides out a momentary proxy stall on a busy laptop
         try:
-            r = requests.get(f"{base}/services", timeout=3)
+            r = requests.get(f"{base}/services", timeout=8)
             tried.append(f"{base} -> HTTP {r.status_code}")
             if r.status_code != 200:
                 continue
@@ -77,7 +91,7 @@ def _resolve():
     raise RuntimeError("Jaeger query API not reachable. Tried: " + "; ".join(tried) + ". Set JAEGER_API.")
 
 
-def _get_text(path, params=None, timeout=20):
+def _get_text(path, params=None, timeout=TIMEOUT_S):
     base, _ = _resolve()
     r = requests.get(f"{base}{path}", params=params, timeout=timeout)
     r.raise_for_status()
@@ -175,6 +189,8 @@ def _group_otlp(chunks):
                     for ev in sp.get("events", []) or []:
                         ea = _clean_attrs(_otlp_attrs(ev.get("attributes")))
                         msg = msg or str(ea.get("exception.message") or "")
+                    if fairplay.is_flag_plumbing(msg, attrs):
+                        continue
                     kind = sp.get("kind")
                     kind = _KIND.get(kind) if isinstance(kind, int) else str(kind or "").replace("SPAN_KIND_", "").lower()
                     start, end = int(sp.get("startTimeUnixNano", 0) or 0), int(sp.get("endTimeUnixNano", 0) or 0)
@@ -208,6 +224,8 @@ def _norm_v1(trace):
         for log in s.get("logs", []):
             f = _clean_attrs({x["key"]: x["value"] for x in log.get("fields", [])})
             msg = msg or str(f.get("exception.message") or f.get("message") or "")
+        if fairplay.is_flag_plumbing(msg, attrs):
+            continue
         parent = next((r["spanID"] for r in s.get("references", []) if r.get("refType") == "CHILD_OF"), "")
         spans.append({
             "span_id": s["spanID"],

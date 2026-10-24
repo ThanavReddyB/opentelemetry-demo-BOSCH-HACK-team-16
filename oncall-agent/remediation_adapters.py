@@ -15,14 +15,24 @@ Config (env): DEMO_DIR, COMPOSE_ARGS, FLAG_FILE, LOCUST_API_URL
 import json
 import os
 import shlex
+import shutil
 import subprocess
 from pathlib import Path
 
 import requests
 
+def _docker_bin():
+    """docker on PATH, or Docker Desktop's default location when a shell hides it from Python."""
+    found = os.environ.get("DOCKER_BIN") or shutil.which("docker")
+    default = Path(r"C:\Program Files\Docker\Docker\resources\bin\docker.exe")
+    return found or (str(default) if default.exists() else "docker")
+
+
+DOCKER = _docker_bin()
+
 AGENT_DIR = Path(__file__).resolve().parent
 DEMO_DIR = Path(os.environ.get("DEMO_DIR", str(AGENT_DIR.parent))).expanduser().resolve()
-COMPOSE = ["docker", "compose"] + shlex.split(os.environ.get("COMPOSE_ARGS", ""))
+COMPOSE = [DOCKER, "compose"] + shlex.split(os.environ.get("COMPOSE_ARGS", ""))
 FLAG_FILE = Path(os.environ.get("FLAG_FILE", str(DEMO_DIR / "src" / "flagd" / "demo.flagd.json")))
 LOCUST_API = os.environ.get("LOCUST_API_URL", "http://localhost:8080/loadgen").rstrip("/")
 
@@ -40,7 +50,7 @@ def _is_running(service):
         if not cid:
             return False
         out = subprocess.run(
-            ["docker", "inspect", "-f", "{{.State.Running}}", cid[0]],
+            [DOCKER, "inspect", "-f", "{{.State.Running}}", cid[0]],
             capture_output=True, text=True, timeout=20,
         ).stdout.strip()
         return out == "true"
@@ -77,8 +87,9 @@ def set_flag(flag_name, variant):
     previous = flags[actual].get("defaultVariant")
     if previous != variant:
         flags[actual]["defaultVariant"] = variant
+        # Written in place; the switch service notices the change itself within a second. Restarting it would
+        # make every service throw connection errors and muddy the recovery check.
         FLAG_FILE.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
-        _compose("restart", "flagd")
     return previous
 
 
