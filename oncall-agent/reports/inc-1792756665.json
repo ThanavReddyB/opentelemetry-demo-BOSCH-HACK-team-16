@@ -1,0 +1,151 @@
+{
+  "incident_id": "inc-1792756665",
+  "status": "Rejected",
+  "alert": "Detector opened an incident. Symptoms: cart: operation POST /oteldemo.CartService/EmptyCart error rate 100.0%; payment: request rate 0.00/s (baseline 0.06/s)",
+  "timeline": {
+    "detected_at": "2026-10-23T11:57:45Z",
+    "completed_at": "2026-10-23T12:02:48Z",
+    "tool_calls_count": 10
+  },
+  "diagnosis": {
+    "fault_class": "app_error",
+    "failing_component": "cart",
+    "cause": "Cart service cannot connect to its Redis storage (valkey-cart), causing POST /oteldemo.CartService/EmptyCart to error 100% of the time",
+    "confidence": "medium",
+    "evidence": [
+      "obs-1: operation POST /oteldemo.CartService/EmptyCart error rate 100.0%",
+      "obs-5: Error status code 'FailedPrecondition' with detail 'Can't access cart storage. System.ApplicationException: Wasn't able to connect to redis"
+    ],
+    "dropped_ungrounded_evidence": [],
+    "secondary_findings": [
+      "payment request rate dropped to 0.0/s (obs-10), likely a downstream effect of the cart failures"
+    ],
+    "suggested_remedy": "restart a service",
+    "escalate_to_human": false
+  },
+  "action_plan": {
+    "allowed": true,
+    "escalate": false,
+    "incident_id": "inc-1792756665",
+    "proposal_version": 1,
+    "action_type": "toggle_feature_flag",
+    "target": "cart",
+    "parameters": {
+      "flag_name": "cartFailure",
+      "variant": "off",
+      "service": "cart"
+    },
+    "reason": "Cart service cannot connect to its Redis storage (valkey-cart), causing POST /oteldemo.CartService/EmptyCart to error 100% of the time",
+    "rollback": {
+      "reversible": true,
+      "description": "Restore 'cartFailure' to its previous variant if verification fails."
+    },
+    "policy_note": "Runbook override: agent suggested restart_service, policy chose toggle_feature_flag for (cart, app_error).",
+    "approval_digest": "6225bb620193076cf24315418253d89babc4ab194ebcd31c958d9300c1832fa6"
+  },
+  "human_approval": {
+    "approved": false,
+    "dry_run": true,
+    "decided_at": "2026-10-23T12:02:48Z",
+    "decided_epoch": 1792756968.962158,
+    "approval_digest": "6225bb620193076cf24315418253d89babc4ab194ebcd31c958d9300c1832fa6",
+    "consumed": false,
+    "operator_input": "no"
+  },
+  "execution": null,
+  "verification": null,
+  "prevention_recommendation": "Add canary checks and automatic rollback for faulty releases; alert on per-operation error rate.",
+  "observations": [
+    {
+      "id": "obs-1",
+      "timestamp": "2026-10-23T11:57:50Z",
+      "tool": "triage",
+      "args": {
+        "window_min": 5
+      },
+      "output_preview": "{\"obs\": \"obs-1\", \"window_min\": 5, \"anomalies\": [{\"type\": \"latency\", \"service\": \"frontend-proxy\", \"score\": 100, \"detail\": \"p95 1443ms (baseline 48ms)\"}, {\"type\": \"latency\", \"service\": \"frontend\", \"score\": 100, \"detail\": \"p95 2457ms (baseline 49ms)\"}, {\"type\": \"operation_error_rate\", \"service\": \"cart\", \"operation\": \"POST /oteldemo.CartService/EmptyCart\", \"score\": 95, \"detail\": \"operation POST /oteldemo.CartService/EmptyCart error rate 100.0%\"}, {\"type\": \"latency\", \"service\": \"cart\", \"score\": 23.2,"
+    },
+    {
+      "id": "obs-2",
+      "timestamp": "2026-10-23T11:57:51Z",
+      "tool": "error_hotspots",
+      "args": {
+        "minutes": 15,
+        "service": "cart"
+      },
+      "output_preview": "{\"obs\": \"obs-2\", \"service_queried\": \"cart\", \"window_min\": 15, \"traces_checked\": 100, \"errored_traces\": 19, \"root_error_hotspots\": [{\"service\": \"frontend-proxy\", \"operation\": \"router frontend egress\", \"message\": \"\", \"count\": 19, \"example_traces\": [\"bd20ef1fcab9385419d2f5ba21191404\", \"2f6ce2853518e1b96bb177c6a1656b4a\"]}]}"
+    },
+    {
+      "id": "obs-3",
+      "timestamp": "2026-10-23T11:57:54Z",
+      "tool": "container_health",
+      "args": {},
+      "output_preview": "{\"obs\": \"obs-3\", \"total\": 22, \"running\": [\"ad\", \"astronomy-db\", \"cart\", \"checkout\", \"currency\", \"email\", \"frontend\", \"frontend-proxy\", \"grafana\", \"image-provider\", \"jaeger\", \"load-generator\", \"opamp-server\", \"otel-collector\", \"payment\", \"product-catalog\", \"prometheus\", \"quote\", \"recommendation\", \"shipping\", \"telemetry-docs\", \"valkey-cart\"], \"not_running\": [], \"restarts_or_oom\": [], \"hot\": [{\"service\": \"ad\", \"cpu_pct\": 0.14, \"mem_pct_of_limit\": 86.26}, {\"service\": \"astronomy-db\", \"cpu_pct\": 0.0, "
+    },
+    {
+      "id": "obs-4",
+      "timestamp": "2026-10-23T11:57:55Z",
+      "tool": "trace_detail",
+      "args": {
+        "trace_id": "bd20ef1fcab9385419d2f5ba21191404"
+      },
+      "output_preview": "{\"obs\": \"obs-4\", \"trace_id\": \"bd20ef1fcab9385419d2f5ba21191404\", \"spans\": 60, \"error_spans\": 3, \"root_error_spans\": [{\"service\": \"frontend-proxy\", \"operation\": \"router frontend egress\", \"span_id\": \"f451a6068370661f\", \"message\": \"\", \"duration_ms\": 14995.3}], \"slowest_spans\": [{\"service\": \"load-generator\", \"operation\": \"user_checkout_multi\", \"duration_ms\": 15059.8}, {\"service\": \"load-generator\", \"operation\": \"POST\", \"duration_ms\": 14997.0}, {\"service\": \"frontend-proxy\", \"operation\": \"POST\", \"durat"
+    },
+    {
+      "id": "obs-5",
+      "timestamp": "2026-10-23T11:58:18Z",
+      "tool": "get_logs",
+      "args": {
+        "service": "cart"
+      },
+      "output_preview": "{\"obs\": \"obs-5\", \"service\": \"cart\", \"window_min\": 10, \"lines\": 1581, \"error_lines\": 11, \"top_patterns\": [{\"count\": 5, \"example\": \"fail: cart.cartstore.ValkeyCartStore[2076027740]\"}, {\"count\": 5, \"example\": \"Error status code 'FailedPrecondition' with detail 'Can't access cart storage. System.ApplicationException: Wasn't able to connect to redis\"}, {\"count\": 1, \"example\": \"Error status code 'FailedPrecondition' with detail 'Can't access cart storage. StackExchange.Redis.RedisTimeoutException: Tim"
+    },
+    {
+      "id": "obs-6",
+      "timestamp": "2026-10-23T11:58:46Z",
+      "tool": "metric_query",
+      "args": {
+        "promql": "sum(rate(otelcol_exporter_sent_spans_total{service=\"payment\"}[5m]))"
+      },
+      "output_preview": "{\"obs\": \"obs-6\", \"query\": \"sum(rate(otelcol_exporter_sent_spans_total{service=\\\"payment\\\"}[5m]))\", \"series\": []}"
+    },
+    {
+      "id": "obs-7",
+      "timestamp": "2026-10-23T11:59:01Z",
+      "tool": "metric_query",
+      "args": {
+        "promql": "sum(rate(otelcol_exporter_sent_spans_total{service=\"payment\"}[5m]))"
+      },
+      "output_preview": "{\"obs\": \"obs-7\", \"query\": \"sum(rate(otelcol_exporter_sent_spans_total{service=\\\"payment\\\"}[5m]))\", \"series\": []}"
+    },
+    {
+      "id": "obs-8",
+      "timestamp": "2026-10-23T11:59:14Z",
+      "tool": "get_logs",
+      "args": {
+        "service": "payment"
+      },
+      "output_preview": "{\"obs\": \"obs-8\", \"service\": \"payment\", \"window_min\": 10, \"lines\": 0, \"error_lines\": 0, \"top_patterns\": []}"
+    },
+    {
+      "id": "obs-9",
+      "timestamp": "2026-10-23T11:59:38Z",
+      "tool": "metric_query",
+      "args": {
+        "promql": "sum(rate(otelcol_exporter_sent_spans_total{service=\"payment\"}[5m]))"
+      },
+      "output_preview": "{\"obs\": \"obs-9\", \"query\": \"sum(rate(otelcol_exporter_sent_spans_total{service=\\\"payment\\\"}[5m]))\", \"series\": []}"
+    },
+    {
+      "id": "obs-10",
+      "timestamp": "2026-10-23T12:00:05Z",
+      "tool": "get_metrics",
+      "args": {
+        "metric": "request_rate",
+        "service": "payment",
+        "window": "5m"
+      },
+      "output_preview": "{\"obs\": \"obs-10\", \"tool\": \"get_metrics\", \"metric\": \"request_rate\", \"window\": \"5m\", \"status\": \"ok\", \"rows\": [{\"service\": \"payment\", \"calls_per_s\": 0.0}], \"queries\": [\"sum by (service_name) (rate(traces_span_metrics_calls_total{service_name!~\\\"flagd|flagd-ui\\\",span_name!~\\\".*(flagd|feature_flag|featureflag).*\\\",service_name=\\\"payment\\\"}[5m]))\"]}"
+    }
+  ]
+}

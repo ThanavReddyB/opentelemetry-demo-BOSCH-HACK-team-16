@@ -1,0 +1,265 @@
+{
+  "incident_id": "inc-1792819426",
+  "status": "Escalated",
+  "alert": "Recommendation service memory usage climbing, possible memory leak",
+  "timeline": {
+    "detected_at": "2026-10-24T05:23:46Z",
+    "completed_at": "2026-10-24T05:25:45Z",
+    "tool_calls_count": 7,
+    "rounds": 1
+  },
+  "diagnosis": {
+    "fault_class": "unknown",
+    "failing_component": "recommendation",
+    "cause": "No errors, no container failures, stable memory usage, no log errors, and no recent deploy changes indicate no observable fault.",
+    "confidence": "medium",
+    "evidence": [
+      "obs-3: \"first\": 51.598, \"last\": 51.33, \"monotonic_up_share\": 0.57",
+      "obs-4: \"first\": 0.798, \"last\": 0.803, \"change_ratio\": 1.01",
+      "obs-5: \"errored_traces\": 0",
+      "obs-6: \"calls_per_s\": 2.771",
+      "obs-7: \"error_lines\": 0"
+    ],
+    "dropped_ungrounded_evidence": [],
+    "secondary_findings": [],
+    "suggested_remedy": "none/escalate",
+    "escalate_to_human": false
+  },
+  "action_plan": {
+    "allowed": false,
+    "escalate": true,
+    "incident_id": "inc-1792819426",
+    "reason": "Proposed remedy 'none/escalate' is not in the Action API allowlist."
+  },
+  "human_approval": null,
+  "execution": null,
+  "verification": null,
+  "rounds": [
+    {
+      "round": 1,
+      "alert": "Recommendation service memory usage climbing, possible memory leak",
+      "diagnosis": {
+        "fault_class": "unknown",
+        "failing_component": "recommendation",
+        "cause": "No errors, no container failures, stable memory usage, no log errors, and no recent deploy changes indicate no observable fault.",
+        "confidence": "medium",
+        "evidence": [
+          "obs-3: \"first\": 51.598, \"last\": 51.33, \"monotonic_up_share\": 0.57",
+          "obs-4: \"first\": 0.798, \"last\": 0.803, \"change_ratio\": 1.01",
+          "obs-5: \"errored_traces\": 0",
+          "obs-6: \"calls_per_s\": 2.771",
+          "obs-7: \"error_lines\": 0"
+        ],
+        "dropped_ungrounded_evidence": [],
+        "secondary_findings": [],
+        "suggested_remedy": "none/escalate",
+        "escalate_to_human": false
+      },
+      "action_plan": {
+        "allowed": false,
+        "escalate": true,
+        "incident_id": "inc-1792819426",
+        "reason": "Proposed remedy 'none/escalate' is not in the Action API allowlist."
+      },
+      "human_approval": null,
+      "execution": null,
+      "verification": null,
+      "observations": [
+        {
+          "id": "obs-1",
+          "timestamp": "2026-10-24T05:23:48Z",
+          "tool": "triage",
+          "args": {
+            "window_min": 5
+          },
+          "finding": "6 anomalies: frontend operation GET /api/recommendations error rate 42.3%; checkout error rate 12.5% (baseline 0.0%)",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-1\", \"window_min\": 5, \"baseline_offsets_min\": [15, 45], \"anomalies\": [{\"type\": \"operation_error_rate\", \"service\": \"frontend\", \"operation\": \"GET /api/recommendations\", \"score\": 42.3, \"detail\": \"operation GET /api/recommendations error rate 42.3%\"}, {\"type\": \"error_rate\", \"service\": \"checkout\", \"score\": 12.5, \"detail\": \"error rate 12.5% (baseline 0.0%)\"}, {\"type\": \"operation_error_rate\", \"service\": \"frontend\", \"operation\": \"POST /api/checkout\", \"score\": 12.5, \"detail\": \"operation POST ",
+          "round": 1
+        },
+        {
+          "id": "obs-2",
+          "timestamp": "2026-10-24T05:23:49Z",
+          "tool": "container_health",
+          "args": {},
+          "finding": "20 running, hot ['ad cpu 0.75% mem 85.63%', 'astronomy-db cpu 1.82% mem 75.58%']",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-2\", \"total\": 20, \"running\": [\"ad\", \"astronomy-db\", \"cart\", \"checkout\", \"currency\", \"email\", \"frontend\", \"frontend-proxy\", \"image-provider\", \"jaeger\", \"load-generator\", \"opamp-server\", \"otel-collector\", \"payment\", \"product-catalog\", \"prometheus\", \"quote\", \"recommendation\", \"shipping\", \"valkey-cart\"], \"not_running\": [], \"restarts_or_oom\": [{\"service\": \"astronomy-db\", \"restarts\": 0, \"oom_killed\": true, \"last_start_min_ago\": 1295.2}], \"hot\": [{\"service\": \"ad\", \"cpu_pct\": 0.75, \"mem_pct_",
+          "round": 1
+        },
+        {
+          "id": "obs-3",
+          "timestamp": "2026-10-24T05:23:50Z",
+          "tool": "metric_trend",
+          "args": {
+            "metric": "memory",
+            "minutes": 60,
+            "service": "recommendation"
+          },
+          "finding": "first 51.598 -> last 51.33 (x0.99, rising 0.57)",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-3\", \"query\": \"max by (container_name)(container_memory_percent_ratio{container_name=\\\"recommendation\\\"})\", \"window_min\": 60, \"series\": [{\"series\": {\"container_name\": \"recommendation\"}, \"first\": 51.598, \"last\": 51.33, \"min\": 51.287, \"max\": 51.67, \"change_ratio\": 0.99, \"monotonic_up_share\": 0.57}]}",
+          "round": 1
+        },
+        {
+          "id": "obs-4",
+          "timestamp": "2026-10-24T05:24:34Z",
+          "tool": "metric_trend",
+          "args": {
+            "metric": "cpu",
+            "minutes": 60,
+            "service": "recommendation"
+          },
+          "finding": "first 0.798 -> last 0.803 (x1.01, rising 0.42)",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-4\", \"query\": \"max by (container_name)(container_cpu_utilization_ratio{container_name=\\\"recommendation\\\"})\", \"window_min\": 60, \"series\": [{\"series\": {\"container_name\": \"recommendation\"}, \"first\": 0.798, \"last\": 0.803, \"min\": 0.798, \"max\": 0.806, \"change_ratio\": 1.01, \"monotonic_up_share\": 0.42}]}",
+          "round": 1
+        },
+        {
+          "id": "obs-5",
+          "timestamp": "2026-10-24T05:24:35Z",
+          "tool": "error_hotspots",
+          "args": {
+            "minutes": 15,
+            "service": "recommendation"
+          },
+          "finding": "0/30 traces errored; no root errors",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-5\", \"service_queried\": \"recommendation\", \"window_min\": 15, \"traces_checked\": 30, \"errored_traces\": 0, \"root_error_hotspots\": []}",
+          "round": 1
+        },
+        {
+          "id": "obs-6",
+          "timestamp": "2026-10-24T05:24:36Z",
+          "tool": "get_metrics",
+          "args": {
+            "metric": "request_rate",
+            "service": "recommendation",
+            "window": "5m"
+          },
+          "finding": "request_rate ok; top: {\"service\": \"recommendation\", \"calls_per_s\": 2.771}",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-6\", \"tool\": \"get_metrics\", \"metric\": \"request_rate\", \"window\": \"5m\", \"status\": \"ok\", \"rows\": [{\"service\": \"recommendation\", \"calls_per_s\": 2.771}], \"queries\": [\"sum by (service_name) (rate(traces_span_metrics_calls_total{service_name!~\\\"flagd|flagd-ui\\\",span_name!~\\\".*(flagd|feature_flag|featureflag).*\\\",service_name=\\\"recommendation\\\"}[5m]))\"]}",
+          "round": 1
+        },
+        {
+          "id": "obs-7",
+          "timestamp": "2026-10-24T05:25:05Z",
+          "tool": "get_logs",
+          "args": {
+            "minutes": 10,
+            "service": "recommendation"
+          },
+          "finding": "0 error lines in 638",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-7\", \"service\": \"recommendation\", \"window_min\": 10, \"lines\": 638, \"error_lines\": 0, \"top_patterns\": []}",
+          "round": 1
+        }
+      ]
+    }
+  ],
+  "prevention_recommendation": [
+    "Add targeted service-level alerts and runbook automation for this failure mode."
+  ],
+  "observations": [
+    {
+      "id": "obs-1",
+      "timestamp": "2026-10-24T05:23:48Z",
+      "tool": "triage",
+      "args": {
+        "window_min": 5
+      },
+      "finding": "6 anomalies: frontend operation GET /api/recommendations error rate 42.3%; checkout error rate 12.5% (baseline 0.0%)",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-1\", \"window_min\": 5, \"baseline_offsets_min\": [15, 45], \"anomalies\": [{\"type\": \"operation_error_rate\", \"service\": \"frontend\", \"operation\": \"GET /api/recommendations\", \"score\": 42.3, \"detail\": \"operation GET /api/recommendations error rate 42.3%\"}, {\"type\": \"error_rate\", \"service\": \"checkout\", \"score\": 12.5, \"detail\": \"error rate 12.5% (baseline 0.0%)\"}, {\"type\": \"operation_error_rate\", \"service\": \"frontend\", \"operation\": \"POST /api/checkout\", \"score\": 12.5, \"detail\": \"operation POST ",
+      "round": 1
+    },
+    {
+      "id": "obs-2",
+      "timestamp": "2026-10-24T05:23:49Z",
+      "tool": "container_health",
+      "args": {},
+      "finding": "20 running, hot ['ad cpu 0.75% mem 85.63%', 'astronomy-db cpu 1.82% mem 75.58%']",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-2\", \"total\": 20, \"running\": [\"ad\", \"astronomy-db\", \"cart\", \"checkout\", \"currency\", \"email\", \"frontend\", \"frontend-proxy\", \"image-provider\", \"jaeger\", \"load-generator\", \"opamp-server\", \"otel-collector\", \"payment\", \"product-catalog\", \"prometheus\", \"quote\", \"recommendation\", \"shipping\", \"valkey-cart\"], \"not_running\": [], \"restarts_or_oom\": [{\"service\": \"astronomy-db\", \"restarts\": 0, \"oom_killed\": true, \"last_start_min_ago\": 1295.2}], \"hot\": [{\"service\": \"ad\", \"cpu_pct\": 0.75, \"mem_pct_",
+      "round": 1
+    },
+    {
+      "id": "obs-3",
+      "timestamp": "2026-10-24T05:23:50Z",
+      "tool": "metric_trend",
+      "args": {
+        "metric": "memory",
+        "minutes": 60,
+        "service": "recommendation"
+      },
+      "finding": "first 51.598 -> last 51.33 (x0.99, rising 0.57)",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-3\", \"query\": \"max by (container_name)(container_memory_percent_ratio{container_name=\\\"recommendation\\\"})\", \"window_min\": 60, \"series\": [{\"series\": {\"container_name\": \"recommendation\"}, \"first\": 51.598, \"last\": 51.33, \"min\": 51.287, \"max\": 51.67, \"change_ratio\": 0.99, \"monotonic_up_share\": 0.57}]}",
+      "round": 1
+    },
+    {
+      "id": "obs-4",
+      "timestamp": "2026-10-24T05:24:34Z",
+      "tool": "metric_trend",
+      "args": {
+        "metric": "cpu",
+        "minutes": 60,
+        "service": "recommendation"
+      },
+      "finding": "first 0.798 -> last 0.803 (x1.01, rising 0.42)",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-4\", \"query\": \"max by (container_name)(container_cpu_utilization_ratio{container_name=\\\"recommendation\\\"})\", \"window_min\": 60, \"series\": [{\"series\": {\"container_name\": \"recommendation\"}, \"first\": 0.798, \"last\": 0.803, \"min\": 0.798, \"max\": 0.806, \"change_ratio\": 1.01, \"monotonic_up_share\": 0.42}]}",
+      "round": 1
+    },
+    {
+      "id": "obs-5",
+      "timestamp": "2026-10-24T05:24:35Z",
+      "tool": "error_hotspots",
+      "args": {
+        "minutes": 15,
+        "service": "recommendation"
+      },
+      "finding": "0/30 traces errored; no root errors",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-5\", \"service_queried\": \"recommendation\", \"window_min\": 15, \"traces_checked\": 30, \"errored_traces\": 0, \"root_error_hotspots\": []}",
+      "round": 1
+    },
+    {
+      "id": "obs-6",
+      "timestamp": "2026-10-24T05:24:36Z",
+      "tool": "get_metrics",
+      "args": {
+        "metric": "request_rate",
+        "service": "recommendation",
+        "window": "5m"
+      },
+      "finding": "request_rate ok; top: {\"service\": \"recommendation\", \"calls_per_s\": 2.771}",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-6\", \"tool\": \"get_metrics\", \"metric\": \"request_rate\", \"window\": \"5m\", \"status\": \"ok\", \"rows\": [{\"service\": \"recommendation\", \"calls_per_s\": 2.771}], \"queries\": [\"sum by (service_name) (rate(traces_span_metrics_calls_total{service_name!~\\\"flagd|flagd-ui\\\",span_name!~\\\".*(flagd|feature_flag|featureflag).*\\\",service_name=\\\"recommendation\\\"}[5m]))\"]}",
+      "round": 1
+    },
+    {
+      "id": "obs-7",
+      "timestamp": "2026-10-24T05:25:05Z",
+      "tool": "get_logs",
+      "args": {
+        "minutes": 10,
+        "service": "recommendation"
+      },
+      "finding": "0 error lines in 638",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-7\", \"service\": \"recommendation\", \"window_min\": 10, \"lines\": 638, \"error_lines\": 0, \"top_patterns\": []}",
+      "round": 1
+    }
+  ],
+  "llm_usage": [
+    {
+      "provider": "groq:openai/gpt-oss-120b",
+      "calls": 9,
+      "tokens": 20606,
+      "daily_quota_hit": false
+    }
+  ],
+  "remaining_symptoms": []
+}

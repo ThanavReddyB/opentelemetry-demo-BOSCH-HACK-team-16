@@ -1,0 +1,323 @@
+{
+  "incident_id": "inc-1792822345",
+  "status": "Escalated",
+  "alert": "Ad service showing high CPU usage and degraded response times",
+  "timeline": {
+    "detected_at": "2026-10-24T06:12:25Z",
+    "completed_at": "2026-10-24T06:14:32Z",
+    "tool_calls_count": 9,
+    "rounds": 1
+  },
+  "diagnosis": {
+    "fault_class": "unknown",
+    "failing_component": "ad",
+    "cause": "No container failures, low CPU, normal latency, no errors in logs, and no recent deploy changes; the alert lacks supporting evidence.",
+    "confidence": "low",
+    "evidence": [
+      "obs-2: {\"service\": \"ad\", \"value\": 5.4096}",
+      "obs-3: {\"running\": [\"ad\", ...], \"not_running\": []}",
+      "obs-4: {\"service\": \"ad\", \"operation\": \"oteldemo.AdService/GetAds\", \"p95_ms\": 3.15}",
+      "obs-6: {\"service\": \"ad\", \"value\": 85.0004}",
+      "obs-7: {\"rows\": []}",
+      "obs-9: {\"error_lines\": 0}"
+    ],
+    "dropped_ungrounded_evidence": [],
+    "secondary_findings": [],
+    "suggested_remedy": "none/escalate",
+    "escalate_to_human": true
+  },
+  "action_plan": {
+    "allowed": false,
+    "escalate": true,
+    "incident_id": "inc-1792822345",
+    "reason": "Diagnosis confidence is low or escalation was requested by the agent."
+  },
+  "human_approval": null,
+  "execution": null,
+  "verification": null,
+  "rounds": [
+    {
+      "round": 1,
+      "alert": "Ad service showing high CPU usage and degraded response times",
+      "diagnosis": {
+        "fault_class": "unknown",
+        "failing_component": "ad",
+        "cause": "No container failures, low CPU, normal latency, no errors in logs, and no recent deploy changes; the alert lacks supporting evidence.",
+        "confidence": "low",
+        "evidence": [
+          "obs-2: {\"service\": \"ad\", \"value\": 5.4096}",
+          "obs-3: {\"running\": [\"ad\", ...], \"not_running\": []}",
+          "obs-4: {\"service\": \"ad\", \"operation\": \"oteldemo.AdService/GetAds\", \"p95_ms\": 3.15}",
+          "obs-6: {\"service\": \"ad\", \"value\": 85.0004}",
+          "obs-7: {\"rows\": []}",
+          "obs-9: {\"error_lines\": 0}"
+        ],
+        "dropped_ungrounded_evidence": [],
+        "secondary_findings": [],
+        "suggested_remedy": "none/escalate",
+        "escalate_to_human": true
+      },
+      "action_plan": {
+        "allowed": false,
+        "escalate": true,
+        "incident_id": "inc-1792822345",
+        "reason": "Diagnosis confidence is low or escalation was requested by the agent."
+      },
+      "human_approval": null,
+      "execution": null,
+      "verification": null,
+      "observations": [
+        {
+          "id": "obs-1",
+          "timestamp": "2026-10-24T06:12:27Z",
+          "tool": "triage",
+          "args": {
+            "window_min": 5
+          },
+          "finding": "1 anomalies: checkout p95 15000ms (baseline 48ms)",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-1\", \"window_min\": 5, \"baseline_offsets_min\": [15, 45], \"anomalies\": [{\"type\": \"latency\", \"service\": \"checkout\", \"score\": 100, \"detail\": \"p95 15000ms (baseline 48ms)\"}], \"service_rates\": {\"email\": 0.0626, \"quote\": 0.2212, \"cart\": 1.461, \"recommendation\": 0.8348, \"ad\": 0.4926, \"checkout\": 0.0626, \"shipping\": 0.2755, \"frontend\": 13.8417, \"payment\": 0.0584, \"telemetry-docs\": 0.2004, \"image-provider\": 4.5082, \"product-catalog\": 5.3388, \"frontend-proxy\": 14.6181, \"currency\": 0.9267}, \"con",
+          "round": 1
+        },
+        {
+          "id": "obs-2",
+          "timestamp": "2026-10-24T06:12:28Z",
+          "tool": "get_metrics",
+          "args": {
+            "metric": "cpu",
+            "service": "ad",
+            "window": "5m"
+          },
+          "finding": "cpu ok; top: {\"service\": \"ad\", \"value\": 5.4096}",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-2\", \"tool\": \"get_metrics\", \"metric\": \"cpu\", \"window\": \"5m\", \"status\": \"ok\", \"rows\": [{\"service\": \"ad\", \"value\": 5.4096}], \"queries\": [\"max by (container_name) (avg_over_time(container_cpu_utilization_ratio{container_name=\\\"ad\\\"}[5m]))\"]}",
+          "round": 1
+        },
+        {
+          "id": "obs-3",
+          "timestamp": "2026-10-24T06:12:29Z",
+          "tool": "container_health",
+          "args": {},
+          "finding": "20 running, hot ['ad cpu 6.99% mem 83.72%', 'astronomy-db cpu 1.85% mem 74.23%']",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-3\", \"total\": 20, \"running\": [\"ad\", \"astronomy-db\", \"cart\", \"checkout\", \"currency\", \"email\", \"frontend\", \"frontend-proxy\", \"image-provider\", \"jaeger\", \"load-generator\", \"opamp-server\", \"otel-collector\", \"payment\", \"product-catalog\", \"prometheus\", \"quote\", \"recommendation\", \"shipping\", \"valkey-cart\"], \"not_running\": [], \"restarts_or_oom\": [{\"service\": \"astronomy-db\", \"restarts\": 0, \"oom_killed\": true, \"last_start_min_ago\": 1343.9}], \"hot\": [{\"service\": \"ad\", \"cpu_pct\": 6.99, \"mem_pct_",
+          "round": 1
+        },
+        {
+          "id": "obs-4",
+          "timestamp": "2026-10-24T06:13:00Z",
+          "tool": "get_metrics",
+          "args": {
+            "metric": "latency_p95",
+            "service": "ad",
+            "window": "5m"
+          },
+          "finding": "latency_p95 ok; top: {\"service\": \"ad\", \"operation\": \"oteldemo.AdService/GetAds\", \"p95_ms\": 3.15}",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-4\", \"tool\": \"get_metrics\", \"metric\": \"latency_p95\", \"window\": \"5m\", \"status\": \"ok\", \"rows\": [{\"service\": \"ad\", \"operation\": \"oteldemo.AdService/GetAds\", \"p95_ms\": 3.15}, {\"service\": \"ad\", \"operation\": \"GET /metrics\", \"p95_ms\": 1.9}, {\"service\": \"ad\", \"operation\": \"getRandomAds\", \"p95_ms\": 1.9}, {\"service\": \"ad\", \"operation\": \"getAdsByCategory\", \"p95_ms\": 1.9}], \"queries\": [\"histogram_quantile(0.95, sum by (le, service_name, span_name) (rate(traces_span_metrics_duration_milliseconds_",
+          "round": 1
+        },
+        {
+          "id": "obs-5",
+          "timestamp": "2026-10-24T06:13:01Z",
+          "tool": "error_hotspots",
+          "args": {
+            "minutes": 15,
+            "service": "checkout"
+          },
+          "finding": "0/30 traces errored; no root errors",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-5\", \"service_queried\": \"checkout\", \"window_min\": 15, \"traces_checked\": 30, \"errored_traces\": 0, \"root_error_hotspots\": []}",
+          "round": 1
+        },
+        {
+          "id": "obs-6",
+          "timestamp": "2026-10-24T06:13:02Z",
+          "tool": "get_metrics",
+          "args": {
+            "metric": "memory",
+            "service": "ad",
+            "window": "5m"
+          },
+          "finding": "memory ok; top: {\"service\": \"ad\", \"value\": 85.0004}",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-6\", \"tool\": \"get_metrics\", \"metric\": \"memory\", \"window\": \"5m\", \"status\": \"ok\", \"rows\": [{\"service\": \"ad\", \"value\": 85.0004}], \"queries\": [\"max by (container_name) (avg_over_time(container_memory_percent_ratio{container_name=\\\"ad\\\"}[5m]))\"]}",
+          "round": 1
+        },
+        {
+          "id": "obs-7",
+          "timestamp": "2026-10-24T06:13:34Z",
+          "tool": "get_metrics",
+          "args": {
+            "metric": "error_rate",
+            "service": "ad",
+            "window": "5m"
+          },
+          "finding": "error_rate ok",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-7\", \"tool\": \"get_metrics\", \"metric\": \"error_rate\", \"window\": \"5m\", \"status\": \"ok\", \"rows\": [], \"queries\": [\"sum by (service_name, span_name) (rate(traces_span_metrics_calls_total{service_name!~\\\"flagd|flagd-ui\\\",span_name!~\\\".*(flagd|feature_flag|featureflag).*\\\",service_name=\\\"ad\\\"}[5m]))\", \"sum by (service_name, span_name) (rate(traces_span_metrics_calls_total{service_name!~\\\"flagd|flagd-ui\\\",span_name!~\\\".*(flagd|feature_flag|featureflag).*\\\",service_name=\\\"ad\\\",status_code=\\\"STA",
+          "round": 1
+        },
+        {
+          "id": "obs-8",
+          "timestamp": "2026-10-24T06:13:35Z",
+          "tool": "metric_trend",
+          "args": {
+            "metric": "memory",
+            "minutes": 30,
+            "service": "ad"
+          },
+          "finding": "first 85.802 -> last 83.729 (x0.98, rising 0.62)",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-8\", \"query\": \"max by (container_name)(container_memory_percent_ratio{container_name=\\\"ad\\\"})\", \"window_min\": 30, \"series\": [{\"series\": {\"container_name\": \"ad\"}, \"first\": 85.802, \"last\": 83.729, \"min\": 83.715, \"max\": 85.911, \"change_ratio\": 0.98, \"monotonic_up_share\": 0.62}]}",
+          "round": 1
+        },
+        {
+          "id": "obs-9",
+          "timestamp": "2026-10-24T06:14:31Z",
+          "tool": "get_logs",
+          "args": {
+            "minutes": 10,
+            "service": "ad"
+          },
+          "finding": "0 error lines in 357",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-9\", \"service\": \"ad\", \"window_min\": 10, \"lines\": 357, \"error_lines\": 0, \"top_patterns\": []}",
+          "round": 1
+        }
+      ]
+    }
+  ],
+  "prevention_recommendation": [
+    "Add targeted service-level alerts and runbook automation for this failure mode."
+  ],
+  "observations": [
+    {
+      "id": "obs-1",
+      "timestamp": "2026-10-24T06:12:27Z",
+      "tool": "triage",
+      "args": {
+        "window_min": 5
+      },
+      "finding": "1 anomalies: checkout p95 15000ms (baseline 48ms)",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-1\", \"window_min\": 5, \"baseline_offsets_min\": [15, 45], \"anomalies\": [{\"type\": \"latency\", \"service\": \"checkout\", \"score\": 100, \"detail\": \"p95 15000ms (baseline 48ms)\"}], \"service_rates\": {\"email\": 0.0626, \"quote\": 0.2212, \"cart\": 1.461, \"recommendation\": 0.8348, \"ad\": 0.4926, \"checkout\": 0.0626, \"shipping\": 0.2755, \"frontend\": 13.8417, \"payment\": 0.0584, \"telemetry-docs\": 0.2004, \"image-provider\": 4.5082, \"product-catalog\": 5.3388, \"frontend-proxy\": 14.6181, \"currency\": 0.9267}, \"con",
+      "round": 1
+    },
+    {
+      "id": "obs-2",
+      "timestamp": "2026-10-24T06:12:28Z",
+      "tool": "get_metrics",
+      "args": {
+        "metric": "cpu",
+        "service": "ad",
+        "window": "5m"
+      },
+      "finding": "cpu ok; top: {\"service\": \"ad\", \"value\": 5.4096}",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-2\", \"tool\": \"get_metrics\", \"metric\": \"cpu\", \"window\": \"5m\", \"status\": \"ok\", \"rows\": [{\"service\": \"ad\", \"value\": 5.4096}], \"queries\": [\"max by (container_name) (avg_over_time(container_cpu_utilization_ratio{container_name=\\\"ad\\\"}[5m]))\"]}",
+      "round": 1
+    },
+    {
+      "id": "obs-3",
+      "timestamp": "2026-10-24T06:12:29Z",
+      "tool": "container_health",
+      "args": {},
+      "finding": "20 running, hot ['ad cpu 6.99% mem 83.72%', 'astronomy-db cpu 1.85% mem 74.23%']",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-3\", \"total\": 20, \"running\": [\"ad\", \"astronomy-db\", \"cart\", \"checkout\", \"currency\", \"email\", \"frontend\", \"frontend-proxy\", \"image-provider\", \"jaeger\", \"load-generator\", \"opamp-server\", \"otel-collector\", \"payment\", \"product-catalog\", \"prometheus\", \"quote\", \"recommendation\", \"shipping\", \"valkey-cart\"], \"not_running\": [], \"restarts_or_oom\": [{\"service\": \"astronomy-db\", \"restarts\": 0, \"oom_killed\": true, \"last_start_min_ago\": 1343.9}], \"hot\": [{\"service\": \"ad\", \"cpu_pct\": 6.99, \"mem_pct_",
+      "round": 1
+    },
+    {
+      "id": "obs-4",
+      "timestamp": "2026-10-24T06:13:00Z",
+      "tool": "get_metrics",
+      "args": {
+        "metric": "latency_p95",
+        "service": "ad",
+        "window": "5m"
+      },
+      "finding": "latency_p95 ok; top: {\"service\": \"ad\", \"operation\": \"oteldemo.AdService/GetAds\", \"p95_ms\": 3.15}",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-4\", \"tool\": \"get_metrics\", \"metric\": \"latency_p95\", \"window\": \"5m\", \"status\": \"ok\", \"rows\": [{\"service\": \"ad\", \"operation\": \"oteldemo.AdService/GetAds\", \"p95_ms\": 3.15}, {\"service\": \"ad\", \"operation\": \"GET /metrics\", \"p95_ms\": 1.9}, {\"service\": \"ad\", \"operation\": \"getRandomAds\", \"p95_ms\": 1.9}, {\"service\": \"ad\", \"operation\": \"getAdsByCategory\", \"p95_ms\": 1.9}], \"queries\": [\"histogram_quantile(0.95, sum by (le, service_name, span_name) (rate(traces_span_metrics_duration_milliseconds_",
+      "round": 1
+    },
+    {
+      "id": "obs-5",
+      "timestamp": "2026-10-24T06:13:01Z",
+      "tool": "error_hotspots",
+      "args": {
+        "minutes": 15,
+        "service": "checkout"
+      },
+      "finding": "0/30 traces errored; no root errors",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-5\", \"service_queried\": \"checkout\", \"window_min\": 15, \"traces_checked\": 30, \"errored_traces\": 0, \"root_error_hotspots\": []}",
+      "round": 1
+    },
+    {
+      "id": "obs-6",
+      "timestamp": "2026-10-24T06:13:02Z",
+      "tool": "get_metrics",
+      "args": {
+        "metric": "memory",
+        "service": "ad",
+        "window": "5m"
+      },
+      "finding": "memory ok; top: {\"service\": \"ad\", \"value\": 85.0004}",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-6\", \"tool\": \"get_metrics\", \"metric\": \"memory\", \"window\": \"5m\", \"status\": \"ok\", \"rows\": [{\"service\": \"ad\", \"value\": 85.0004}], \"queries\": [\"max by (container_name) (avg_over_time(container_memory_percent_ratio{container_name=\\\"ad\\\"}[5m]))\"]}",
+      "round": 1
+    },
+    {
+      "id": "obs-7",
+      "timestamp": "2026-10-24T06:13:34Z",
+      "tool": "get_metrics",
+      "args": {
+        "metric": "error_rate",
+        "service": "ad",
+        "window": "5m"
+      },
+      "finding": "error_rate ok",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-7\", \"tool\": \"get_metrics\", \"metric\": \"error_rate\", \"window\": \"5m\", \"status\": \"ok\", \"rows\": [], \"queries\": [\"sum by (service_name, span_name) (rate(traces_span_metrics_calls_total{service_name!~\\\"flagd|flagd-ui\\\",span_name!~\\\".*(flagd|feature_flag|featureflag).*\\\",service_name=\\\"ad\\\"}[5m]))\", \"sum by (service_name, span_name) (rate(traces_span_metrics_calls_total{service_name!~\\\"flagd|flagd-ui\\\",span_name!~\\\".*(flagd|feature_flag|featureflag).*\\\",service_name=\\\"ad\\\",status_code=\\\"STA",
+      "round": 1
+    },
+    {
+      "id": "obs-8",
+      "timestamp": "2026-10-24T06:13:35Z",
+      "tool": "metric_trend",
+      "args": {
+        "metric": "memory",
+        "minutes": 30,
+        "service": "ad"
+      },
+      "finding": "first 85.802 -> last 83.729 (x0.98, rising 0.62)",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-8\", \"query\": \"max by (container_name)(container_memory_percent_ratio{container_name=\\\"ad\\\"})\", \"window_min\": 30, \"series\": [{\"series\": {\"container_name\": \"ad\"}, \"first\": 85.802, \"last\": 83.729, \"min\": 83.715, \"max\": 85.911, \"change_ratio\": 0.98, \"monotonic_up_share\": 0.62}]}",
+      "round": 1
+    },
+    {
+      "id": "obs-9",
+      "timestamp": "2026-10-24T06:14:31Z",
+      "tool": "get_logs",
+      "args": {
+        "minutes": 10,
+        "service": "ad"
+      },
+      "finding": "0 error lines in 357",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-9\", \"service\": \"ad\", \"window_min\": 10, \"lines\": 357, \"error_lines\": 0, \"top_patterns\": []}",
+      "round": 1
+    }
+  ],
+  "llm_usage": [
+    {
+      "provider": "groq:openai/gpt-oss-120b",
+      "calls": 11,
+      "tokens": 27771,
+      "daily_quota_hit": false
+    }
+  ],
+  "remaining_symptoms": []
+}

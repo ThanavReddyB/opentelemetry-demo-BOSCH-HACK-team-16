@@ -1,0 +1,510 @@
+{
+  "incident_id": "inc-1792822512",
+  "status": "Partially_Resolved_Rejected",
+  "alert": "Ad service showing high CPU usage and degraded response times",
+  "timeline": {
+    "detected_at": "2026-10-24T06:15:12Z",
+    "completed_at": "2026-10-24T06:21:25Z",
+    "tool_calls_count": 11,
+    "rounds": 2
+  },
+  "diagnosis": {
+    "fault_class": "cpu_saturation",
+    "failing_component": "ad",
+    "cause": "The ad service is consuming excessive CPU (\u22487.3 cores) and high memory (\u224884%), causing degraded response times.",
+    "confidence": "medium",
+    "evidence": [
+      "obs-3: {\"service\": \"ad\", \"value\": 7.2631}",
+      "obs-5: {\"service\": \"ad\", \"value\": 84.0329}",
+      "obs-6: {\"errored_traces\": 0}",
+      "obs-7: {\"error_lines\": 0}"
+    ],
+    "dropped_ungrounded_evidence": [],
+    "secondary_findings": [],
+    "suggested_remedy": "toggle a feature flag",
+    "escalate_to_human": false
+  },
+  "action_plan": {
+    "allowed": true,
+    "escalate": false,
+    "incident_id": "inc-1792822512",
+    "proposal_version": 2,
+    "round": 2,
+    "action_type": "restart_service",
+    "target": "astronomy-db",
+    "parameters": {
+      "service_name": "astronomy-db",
+      "reset_limits": false
+    },
+    "reason": "The astronomy-db container was OOM\u2011killed (role \"root\" does not exist) and restarted, indicating a crash due to memory pressure.",
+    "rollback": {
+      "reversible": false,
+      "description": "A restart has no natural inverse; if verification fails, escalate to a human."
+    },
+    "policy_note": null,
+    "approval_digest": "86b7f73d9a2c498e92adf5d5ac2e1a357045b8683a4532eb14c373e288ee4553"
+  },
+  "human_approval": {
+    "approved": false,
+    "dry_run": false,
+    "decided_at": "2026-10-24T06:21:25Z",
+    "decided_epoch": 1792822885.4065626,
+    "approval_digest": "86b7f73d9a2c498e92adf5d5ac2e1a357045b8683a4532eb14c373e288ee4553",
+    "consumed": false,
+    "operator_input": "no",
+    "approver": "Potat"
+  },
+  "execution": null,
+  "verification": null,
+  "rounds": [
+    {
+      "round": 1,
+      "alert": "Ad service showing high CPU usage and degraded response times",
+      "diagnosis": {
+        "fault_class": "cpu_saturation",
+        "failing_component": "ad",
+        "cause": "The ad service is consuming excessive CPU (\u22487.3 cores) and high memory (\u224884%), causing degraded response times.",
+        "confidence": "medium",
+        "evidence": [
+          "obs-3: {\"service\": \"ad\", \"value\": 7.2631}",
+          "obs-5: {\"service\": \"ad\", \"value\": 84.0329}",
+          "obs-6: {\"errored_traces\": 0}",
+          "obs-7: {\"error_lines\": 0}"
+        ],
+        "dropped_ungrounded_evidence": [],
+        "secondary_findings": [],
+        "suggested_remedy": "toggle a feature flag",
+        "escalate_to_human": false
+      },
+      "action_plan": {
+        "allowed": true,
+        "escalate": false,
+        "incident_id": "inc-1792822512",
+        "proposal_version": 1,
+        "round": 1,
+        "action_type": "toggle_feature_flag",
+        "target": "ad",
+        "parameters": {
+          "flag_name": "adHighCpu",
+          "variant": "off",
+          "service": "ad"
+        },
+        "reason": "The ad service is consuming excessive CPU (\u22487.3 cores) and high memory (\u224884%), causing degraded response times.",
+        "rollback": {
+          "reversible": true,
+          "description": "Restore 'adHighCpu' to its previous variant if verification fails."
+        },
+        "policy_note": null,
+        "approval_digest": "b47551100abd46e3d5b6d884427c708a4674aaeec6e3ed1bac7c65ead664809d"
+      },
+      "human_approval": {
+        "approved": true,
+        "dry_run": false,
+        "decided_at": "2026-10-24T06:17:30Z",
+        "decided_epoch": 1792822650.1878564,
+        "approval_digest": "b47551100abd46e3d5b6d884427c708a4674aaeec6e3ed1bac7c65ead664809d",
+        "consumed": true,
+        "operator_input": "yes",
+        "approver": "Potat"
+      },
+      "execution": {
+        "executed": true,
+        "status": "success",
+        "action_type": "toggle_feature_flag",
+        "previous_variant": "on",
+        "detail": "Set adHighCpu -> off (was on)"
+      },
+      "verification": {
+        "verified": true,
+        "target_recovered": true,
+        "status": "Resolved",
+        "target_service": "ad",
+        "watched_services": [
+          "ad",
+          "frontend"
+        ],
+        "passing_samples": 2,
+        "required_samples": 2,
+        "checks": [
+          {
+            "sample": 1,
+            "timestamp": "2026-10-24T06:18:30Z",
+            "passed": true,
+            "target_ok": true,
+            "blind": [],
+            "remaining_anomalies": [],
+            "not_running": [],
+            "still_cpu_capped": [],
+            "stopped_dependencies": [],
+            "no_traffic_seen": false,
+            "other_anomalies": []
+          },
+          {
+            "sample": 2,
+            "timestamp": "2026-10-24T06:18:51Z",
+            "passed": true,
+            "target_ok": true,
+            "blind": [],
+            "remaining_anomalies": [],
+            "not_running": [],
+            "still_cpu_capped": [],
+            "stopped_dependencies": [],
+            "no_traffic_seen": false,
+            "other_anomalies": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "id": "obs-1",
+          "timestamp": "2026-10-24T06:15:14Z",
+          "tool": "triage",
+          "args": {
+            "window_min": 5
+          },
+          "finding": "0 anomalies",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-1\", \"window_min\": 5, \"baseline_offsets_min\": [15, 45], \"anomalies\": [], \"service_rates\": {\"email\": 0.0417, \"quote\": 0.1836, \"cart\": 1.3607, \"recommendation\": 0.8389, \"ad\": 0.4716, \"checkout\": 0.0417, \"shipping\": 0.2296, \"frontend\": 13.4022, \"payment\": 0.0417, \"telemetry-docs\": 0.1962, \"image-provider\": 4.2698, \"product-catalog\": 5.259, \"frontend-proxy\": 14.2954, \"currency\": 0.9642}, \"containers\": {\"restarts_or_oom\": [{\"service\": \"astronomy-db\", \"restarts\": 0, \"oom_killed\": true, \"la",
+          "round": 1
+        },
+        {
+          "id": "obs-2",
+          "timestamp": "2026-10-24T06:15:15Z",
+          "tool": "container_health",
+          "args": {},
+          "finding": "20 running, hot ['ad cpu 8.86% mem 83.9%', 'astronomy-db cpu 1.85% mem 74.26%']",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-2\", \"total\": 20, \"running\": [\"ad\", \"astronomy-db\", \"cart\", \"checkout\", \"currency\", \"email\", \"frontend\", \"frontend-proxy\", \"image-provider\", \"jaeger\", \"load-generator\", \"opamp-server\", \"otel-collector\", \"payment\", \"product-catalog\", \"prometheus\", \"quote\", \"recommendation\", \"shipping\", \"valkey-cart\"], \"not_running\": [], \"restarts_or_oom\": [{\"service\": \"astronomy-db\", \"restarts\": 0, \"oom_killed\": true, \"last_start_min_ago\": 1346.7}], \"hot\": [{\"service\": \"ad\", \"cpu_pct\": 8.86, \"mem_pct_",
+          "round": 1
+        },
+        {
+          "id": "obs-3",
+          "timestamp": "2026-10-24T06:15:16Z",
+          "tool": "get_metrics",
+          "args": {
+            "metric": "cpu",
+            "service": "ad",
+            "window": "5m"
+          },
+          "finding": "cpu ok; top: {\"service\": \"ad\", \"value\": 7.2631}",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-3\", \"tool\": \"get_metrics\", \"metric\": \"cpu\", \"window\": \"5m\", \"status\": \"ok\", \"rows\": [{\"service\": \"ad\", \"value\": 7.2631}], \"queries\": [\"max by (container_name) (avg_over_time(container_cpu_utilization_ratio{container_name=\\\"ad\\\"}[5m]))\"]}",
+          "round": 1
+        },
+        {
+          "id": "obs-4",
+          "timestamp": "2026-10-24T06:15:54Z",
+          "tool": "get_metrics",
+          "args": {
+            "metric": "latency_p95",
+            "service": "ad",
+            "window": "5m"
+          },
+          "finding": "latency_p95 ok; top: {\"service\": \"ad\", \"operation\": \"GET /metrics\", \"p95_ms\": 26.0}",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-4\", \"tool\": \"get_metrics\", \"metric\": \"latency_p95\", \"window\": \"5m\", \"status\": \"ok\", \"rows\": [{\"service\": \"ad\", \"operation\": \"GET /metrics\", \"p95_ms\": 26.0}, {\"service\": \"ad\", \"operation\": \"oteldemo.AdService/GetAds\", \"p95_ms\": 13.6}, {\"service\": \"ad\", \"operation\": \"getRandomAds\", \"p95_ms\": 1.9}, {\"service\": \"ad\", \"operation\": \"getAdsByCategory\", \"p95_ms\": 1.9}], \"queries\": [\"histogram_quantile(0.95, sum by (le, service_name, span_name) (rate(traces_span_metrics_duration_milliseconds",
+          "round": 1
+        },
+        {
+          "id": "obs-5",
+          "timestamp": "2026-10-24T06:15:55Z",
+          "tool": "get_metrics",
+          "args": {
+            "metric": "memory",
+            "service": "ad",
+            "window": "5m"
+          },
+          "finding": "memory ok; top: {\"service\": \"ad\", \"value\": 84.0329}",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-5\", \"tool\": \"get_metrics\", \"metric\": \"memory\", \"window\": \"5m\", \"status\": \"ok\", \"rows\": [{\"service\": \"ad\", \"value\": 84.0329}], \"queries\": [\"max by (container_name) (avg_over_time(container_memory_percent_ratio{container_name=\\\"ad\\\"}[5m]))\"]}",
+          "round": 1
+        },
+        {
+          "id": "obs-6",
+          "timestamp": "2026-10-24T06:16:27Z",
+          "tool": "error_hotspots",
+          "args": {
+            "minutes": 15,
+            "service": "ad"
+          },
+          "finding": "0/30 traces errored; no root errors",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-6\", \"service_queried\": \"ad\", \"window_min\": 15, \"traces_checked\": 30, \"errored_traces\": 0, \"root_error_hotspots\": []}",
+          "round": 1
+        },
+        {
+          "id": "obs-7",
+          "timestamp": "2026-10-24T06:16:29Z",
+          "tool": "get_logs",
+          "args": {
+            "minutes": 10,
+            "service": "ad"
+          },
+          "finding": "0 error lines in 427",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-7\", \"service\": \"ad\", \"window_min\": 10, \"lines\": 427, \"error_lines\": 0, \"top_patterns\": []}",
+          "round": 1
+        }
+      ]
+    },
+    {
+      "round": 2,
+      "alert": "Detector opened an incident. Symptoms: astronomy-db: container astronomy-db restarted 0x (OOM killed: True)",
+      "diagnosis": {
+        "fault_class": "container_crash_or_restart",
+        "failing_component": "astronomy-db",
+        "cause": "The astronomy-db container was OOM\u2011killed (role \"root\" does not exist) and restarted, indicating a crash due to memory pressure.",
+        "confidence": "high",
+        "evidence": [
+          "obs-1: astronomy-db restarted 0x (OOM killed: True)",
+          "obs-3: 2026-10-24 05:50:47.272 UTC [95724] FATAL:  role \"root\" does not exist"
+        ],
+        "dropped_ungrounded_evidence": [],
+        "secondary_findings": [],
+        "suggested_remedy": "restart a service",
+        "escalate_to_human": false
+      },
+      "action_plan": {
+        "allowed": true,
+        "escalate": false,
+        "incident_id": "inc-1792822512",
+        "proposal_version": 2,
+        "round": 2,
+        "action_type": "restart_service",
+        "target": "astronomy-db",
+        "parameters": {
+          "service_name": "astronomy-db",
+          "reset_limits": false
+        },
+        "reason": "The astronomy-db container was OOM\u2011killed (role \"root\" does not exist) and restarted, indicating a crash due to memory pressure.",
+        "rollback": {
+          "reversible": false,
+          "description": "A restart has no natural inverse; if verification fails, escalate to a human."
+        },
+        "policy_note": null,
+        "approval_digest": "86b7f73d9a2c498e92adf5d5ac2e1a357045b8683a4532eb14c373e288ee4553"
+      },
+      "human_approval": {
+        "approved": false,
+        "dry_run": false,
+        "decided_at": "2026-10-24T06:21:25Z",
+        "decided_epoch": 1792822885.4065626,
+        "approval_digest": "86b7f73d9a2c498e92adf5d5ac2e1a357045b8683a4532eb14c373e288ee4553",
+        "consumed": false,
+        "operator_input": "no",
+        "approver": "Potat"
+      },
+      "execution": null,
+      "verification": null,
+      "observations": [
+        {
+          "id": "obs-1",
+          "timestamp": "2026-10-24T06:20:09Z",
+          "tool": "triage",
+          "args": {
+            "window_min": 5
+          },
+          "finding": "0 anomalies",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-1\", \"window_min\": 5, \"baseline_offsets_min\": [15, 45], \"anomalies\": [], \"service_rates\": {\"email\": 0.0376, \"quote\": 0.1921, \"cart\": 1.512, \"recommendation\": 0.8187, \"ad\": 0.4887, \"checkout\": 0.0376, \"shipping\": 0.2297, \"frontend\": 13.8631, \"payment\": 0.0376, \"telemetry-docs\": 0.2005, \"image-provider\": 4.5152, \"product-catalog\": 5.2838, \"frontend-proxy\": 14.3811, \"currency\": 0.9356}, \"containers\": {\"restarts_or_oom\": [{\"service\": \"astronomy-db\", \"restarts\": 0, \"oom_killed\": true, \"la",
+          "round": 2
+        },
+        {
+          "id": "obs-2",
+          "timestamp": "2026-10-24T06:20:43Z",
+          "tool": "error_hotspots",
+          "args": {
+            "minutes": 30,
+            "service": "astronomy-db"
+          },
+          "finding": "tool error: HTTPError: 404 Client Error: Not Found for url: http://localhost:57137/jaeger/ui/api/v3/t...",
+          "empty": true,
+          "output_preview": "{\"obs\": \"obs-2\", \"tool_error\": \"HTTPError: 404 Client Error: Not Found for url: http://localhost:57137/jaeger/ui/api/v3/traces?query.service_name=astronomy-db&query.start_time_min=2026-10-24T05%3A50%3A43Z&query.start_time_max=2026-10-24T06%3A20%3A43Z&query.num_traces=30\", \"evidence_note\": \"this result is empty or failed: it is not evidence of anything\"}",
+          "round": 2
+        },
+        {
+          "id": "obs-3",
+          "timestamp": "2026-10-24T06:20:44Z",
+          "tool": "get_logs",
+          "args": {
+            "minutes": 30,
+            "service": "astronomy-db"
+          },
+          "finding": "357 error lines in 357; top: '2026-10-24 05:50:47.272 UTC [95724] FATAL: role \"root\" does not exist'",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-3\", \"service\": \"astronomy-db\", \"window_min\": 30, \"lines\": 357, \"error_lines\": 357, \"top_patterns\": [{\"count\": 357, \"example\": \"2026-10-24 05:50:47.272 UTC [95724] FATAL:  role \\\"root\\\" does not exist\"}]}",
+          "round": 2
+        },
+        {
+          "id": "obs-4",
+          "timestamp": "2026-10-24T06:20:45Z",
+          "tool": "deploy_history",
+          "args": {
+            "minutes": 60
+          },
+          "finding": "1 recent container changes: recommendation started 54.7m ago",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-4\", \"window_min\": 60, \"container_changes\": [{\"service\": \"recommendation\", \"event\": \"started\", \"minutes_ago\": 54.7, \"image\": \"demo:latest-recommendation\"}], \"recent_agent_actions\": [{\"event\": \"action_executed\", \"action_type\": \"toggle_feature_flag\", \"target\": \"product-catalog\", \"status\": \"success\", \"minutes_ago\": 45.3}, {\"event\": \"action_executed\", \"action_type\": \"toggle_feature_flag\", \"target\": \"ad\", \"status\": \"success\", \"minutes_ago\": 38.5}, {\"event\": \"action_executed\", \"action_type",
+          "round": 2
+        }
+      ]
+    }
+  ],
+  "prevention_recommendation": [
+    "Set CPU request/limit guardrails and profile GC pauses under load.",
+    "Alert at 80% of the memory limit and enforce liveness/readiness probes."
+  ],
+  "observations": [
+    {
+      "id": "obs-1",
+      "timestamp": "2026-10-24T06:15:14Z",
+      "tool": "triage",
+      "args": {
+        "window_min": 5
+      },
+      "finding": "0 anomalies",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-1\", \"window_min\": 5, \"baseline_offsets_min\": [15, 45], \"anomalies\": [], \"service_rates\": {\"email\": 0.0417, \"quote\": 0.1836, \"cart\": 1.3607, \"recommendation\": 0.8389, \"ad\": 0.4716, \"checkout\": 0.0417, \"shipping\": 0.2296, \"frontend\": 13.4022, \"payment\": 0.0417, \"telemetry-docs\": 0.1962, \"image-provider\": 4.2698, \"product-catalog\": 5.259, \"frontend-proxy\": 14.2954, \"currency\": 0.9642}, \"containers\": {\"restarts_or_oom\": [{\"service\": \"astronomy-db\", \"restarts\": 0, \"oom_killed\": true, \"la",
+      "round": 1
+    },
+    {
+      "id": "obs-2",
+      "timestamp": "2026-10-24T06:15:15Z",
+      "tool": "container_health",
+      "args": {},
+      "finding": "20 running, hot ['ad cpu 8.86% mem 83.9%', 'astronomy-db cpu 1.85% mem 74.26%']",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-2\", \"total\": 20, \"running\": [\"ad\", \"astronomy-db\", \"cart\", \"checkout\", \"currency\", \"email\", \"frontend\", \"frontend-proxy\", \"image-provider\", \"jaeger\", \"load-generator\", \"opamp-server\", \"otel-collector\", \"payment\", \"product-catalog\", \"prometheus\", \"quote\", \"recommendation\", \"shipping\", \"valkey-cart\"], \"not_running\": [], \"restarts_or_oom\": [{\"service\": \"astronomy-db\", \"restarts\": 0, \"oom_killed\": true, \"last_start_min_ago\": 1346.7}], \"hot\": [{\"service\": \"ad\", \"cpu_pct\": 8.86, \"mem_pct_",
+      "round": 1
+    },
+    {
+      "id": "obs-3",
+      "timestamp": "2026-10-24T06:15:16Z",
+      "tool": "get_metrics",
+      "args": {
+        "metric": "cpu",
+        "service": "ad",
+        "window": "5m"
+      },
+      "finding": "cpu ok; top: {\"service\": \"ad\", \"value\": 7.2631}",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-3\", \"tool\": \"get_metrics\", \"metric\": \"cpu\", \"window\": \"5m\", \"status\": \"ok\", \"rows\": [{\"service\": \"ad\", \"value\": 7.2631}], \"queries\": [\"max by (container_name) (avg_over_time(container_cpu_utilization_ratio{container_name=\\\"ad\\\"}[5m]))\"]}",
+      "round": 1
+    },
+    {
+      "id": "obs-4",
+      "timestamp": "2026-10-24T06:15:54Z",
+      "tool": "get_metrics",
+      "args": {
+        "metric": "latency_p95",
+        "service": "ad",
+        "window": "5m"
+      },
+      "finding": "latency_p95 ok; top: {\"service\": \"ad\", \"operation\": \"GET /metrics\", \"p95_ms\": 26.0}",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-4\", \"tool\": \"get_metrics\", \"metric\": \"latency_p95\", \"window\": \"5m\", \"status\": \"ok\", \"rows\": [{\"service\": \"ad\", \"operation\": \"GET /metrics\", \"p95_ms\": 26.0}, {\"service\": \"ad\", \"operation\": \"oteldemo.AdService/GetAds\", \"p95_ms\": 13.6}, {\"service\": \"ad\", \"operation\": \"getRandomAds\", \"p95_ms\": 1.9}, {\"service\": \"ad\", \"operation\": \"getAdsByCategory\", \"p95_ms\": 1.9}], \"queries\": [\"histogram_quantile(0.95, sum by (le, service_name, span_name) (rate(traces_span_metrics_duration_milliseconds",
+      "round": 1
+    },
+    {
+      "id": "obs-5",
+      "timestamp": "2026-10-24T06:15:55Z",
+      "tool": "get_metrics",
+      "args": {
+        "metric": "memory",
+        "service": "ad",
+        "window": "5m"
+      },
+      "finding": "memory ok; top: {\"service\": \"ad\", \"value\": 84.0329}",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-5\", \"tool\": \"get_metrics\", \"metric\": \"memory\", \"window\": \"5m\", \"status\": \"ok\", \"rows\": [{\"service\": \"ad\", \"value\": 84.0329}], \"queries\": [\"max by (container_name) (avg_over_time(container_memory_percent_ratio{container_name=\\\"ad\\\"}[5m]))\"]}",
+      "round": 1
+    },
+    {
+      "id": "obs-6",
+      "timestamp": "2026-10-24T06:16:27Z",
+      "tool": "error_hotspots",
+      "args": {
+        "minutes": 15,
+        "service": "ad"
+      },
+      "finding": "0/30 traces errored; no root errors",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-6\", \"service_queried\": \"ad\", \"window_min\": 15, \"traces_checked\": 30, \"errored_traces\": 0, \"root_error_hotspots\": []}",
+      "round": 1
+    },
+    {
+      "id": "obs-7",
+      "timestamp": "2026-10-24T06:16:29Z",
+      "tool": "get_logs",
+      "args": {
+        "minutes": 10,
+        "service": "ad"
+      },
+      "finding": "0 error lines in 427",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-7\", \"service\": \"ad\", \"window_min\": 10, \"lines\": 427, \"error_lines\": 0, \"top_patterns\": []}",
+      "round": 1
+    },
+    {
+      "id": "obs-1",
+      "timestamp": "2026-10-24T06:20:09Z",
+      "tool": "triage",
+      "args": {
+        "window_min": 5
+      },
+      "finding": "0 anomalies",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-1\", \"window_min\": 5, \"baseline_offsets_min\": [15, 45], \"anomalies\": [], \"service_rates\": {\"email\": 0.0376, \"quote\": 0.1921, \"cart\": 1.512, \"recommendation\": 0.8187, \"ad\": 0.4887, \"checkout\": 0.0376, \"shipping\": 0.2297, \"frontend\": 13.8631, \"payment\": 0.0376, \"telemetry-docs\": 0.2005, \"image-provider\": 4.5152, \"product-catalog\": 5.2838, \"frontend-proxy\": 14.3811, \"currency\": 0.9356}, \"containers\": {\"restarts_or_oom\": [{\"service\": \"astronomy-db\", \"restarts\": 0, \"oom_killed\": true, \"la",
+      "round": 2
+    },
+    {
+      "id": "obs-2",
+      "timestamp": "2026-10-24T06:20:43Z",
+      "tool": "error_hotspots",
+      "args": {
+        "minutes": 30,
+        "service": "astronomy-db"
+      },
+      "finding": "tool error: HTTPError: 404 Client Error: Not Found for url: http://localhost:57137/jaeger/ui/api/v3/t...",
+      "empty": true,
+      "output_preview": "{\"obs\": \"obs-2\", \"tool_error\": \"HTTPError: 404 Client Error: Not Found for url: http://localhost:57137/jaeger/ui/api/v3/traces?query.service_name=astronomy-db&query.start_time_min=2026-10-24T05%3A50%3A43Z&query.start_time_max=2026-10-24T06%3A20%3A43Z&query.num_traces=30\", \"evidence_note\": \"this result is empty or failed: it is not evidence of anything\"}",
+      "round": 2
+    },
+    {
+      "id": "obs-3",
+      "timestamp": "2026-10-24T06:20:44Z",
+      "tool": "get_logs",
+      "args": {
+        "minutes": 30,
+        "service": "astronomy-db"
+      },
+      "finding": "357 error lines in 357; top: '2026-10-24 05:50:47.272 UTC [95724] FATAL: role \"root\" does not exist'",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-3\", \"service\": \"astronomy-db\", \"window_min\": 30, \"lines\": 357, \"error_lines\": 357, \"top_patterns\": [{\"count\": 357, \"example\": \"2026-10-24 05:50:47.272 UTC [95724] FATAL:  role \\\"root\\\" does not exist\"}]}",
+      "round": 2
+    },
+    {
+      "id": "obs-4",
+      "timestamp": "2026-10-24T06:20:45Z",
+      "tool": "deploy_history",
+      "args": {
+        "minutes": 60
+      },
+      "finding": "1 recent container changes: recommendation started 54.7m ago",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-4\", \"window_min\": 60, \"container_changes\": [{\"service\": \"recommendation\", \"event\": \"started\", \"minutes_ago\": 54.7, \"image\": \"demo:latest-recommendation\"}], \"recent_agent_actions\": [{\"event\": \"action_executed\", \"action_type\": \"toggle_feature_flag\", \"target\": \"product-catalog\", \"status\": \"success\", \"minutes_ago\": 45.3}, {\"event\": \"action_executed\", \"action_type\": \"toggle_feature_flag\", \"target\": \"ad\", \"status\": \"success\", \"minutes_ago\": 38.5}, {\"event\": \"action_executed\", \"action_type",
+      "round": 2
+    }
+  ],
+  "llm_usage": [
+    {
+      "provider": "groq:openai/gpt-oss-120b",
+      "calls": 15,
+      "tokens": 36468,
+      "daily_quota_hit": false
+    }
+  ],
+  "remaining_symptoms": [
+    "astronomy-db: container astronomy-db restarted 0x (OOM killed: True)"
+  ]
+}

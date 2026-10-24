@@ -1,0 +1,476 @@
+{
+  "incident_id": "inc-1792816245",
+  "status": "Partially_Resolved_Rejected",
+  "alert": "Payment errors: checkout error rate elevated, payment failing charges",
+  "timeline": {
+    "detected_at": "2026-10-24T04:30:45Z",
+    "completed_at": "2026-10-24T04:36:05Z",
+    "tool_calls_count": 10,
+    "rounds": 2
+  },
+  "diagnosis": {
+    "fault_class": "app_error",
+    "failing_component": "payment",
+    "cause": "Payment service is returning errors (invalid token) for charge requests, causing checkout failures.",
+    "confidence": "high",
+    "evidence": [
+      "obs-1: error rate 100.0% (baseline 0.0%)",
+      "obs-3: root_error_hotspots ... service: payment, operation: charge, message: Payment request failed. Invalid token.",
+      "obs-5: top_patterns ... error_lines: 9"
+    ],
+    "dropped_ungrounded_evidence": [],
+    "secondary_findings": [
+      "checkout: latency regression due to downstream payment errors"
+    ],
+    "suggested_remedy": "restart a service",
+    "escalate_to_human": false
+  },
+  "action_plan": {
+    "allowed": true,
+    "escalate": false,
+    "incident_id": "inc-1792816245",
+    "proposal_version": 2,
+    "round": 2,
+    "action_type": "restart_service",
+    "target": "astronomy-db",
+    "parameters": {
+      "service_name": "astronomy-db",
+      "reset_limits": false
+    },
+    "reason": "The astronomy-db container was OOM\u2011killed and its logs show fatal startup errors (missing DB role), indicating it cannot stay up.",
+    "rollback": {
+      "reversible": false,
+      "description": "A restart has no natural inverse; if verification fails, escalate to a human."
+    },
+    "policy_note": null,
+    "approval_digest": "e4e5c7db0ee943230e914e899e10073fd2fafc76902fac9c8942871ae8d40dde"
+  },
+  "human_approval": {
+    "approved": false,
+    "dry_run": false,
+    "decided_at": "2026-10-24T04:36:05Z",
+    "decided_epoch": 1792816565.4343321,
+    "approval_digest": "e4e5c7db0ee943230e914e899e10073fd2fafc76902fac9c8942871ae8d40dde",
+    "consumed": false,
+    "operator_input": "no",
+    "approver": "Potat"
+  },
+  "execution": null,
+  "verification": null,
+  "rounds": [
+    {
+      "round": 1,
+      "alert": "Payment errors: checkout error rate elevated, payment failing charges",
+      "diagnosis": {
+        "fault_class": "app_error",
+        "failing_component": "payment",
+        "cause": "Payment service is returning errors (invalid token) for charge requests, causing checkout failures.",
+        "confidence": "high",
+        "evidence": [
+          "obs-1: error rate 100.0% (baseline 0.0%)",
+          "obs-3: root_error_hotspots ... service: payment, operation: charge, message: Payment request failed. Invalid token.",
+          "obs-5: top_patterns ... error_lines: 9"
+        ],
+        "dropped_ungrounded_evidence": [],
+        "secondary_findings": [
+          "checkout: latency regression due to downstream payment errors"
+        ],
+        "suggested_remedy": "restart a service",
+        "escalate_to_human": false
+      },
+      "action_plan": {
+        "allowed": true,
+        "escalate": false,
+        "incident_id": "inc-1792816245",
+        "proposal_version": 1,
+        "round": 1,
+        "action_type": "toggle_feature_flag",
+        "target": "payment",
+        "parameters": {
+          "flag_name": "paymentFailure",
+          "variant": "off",
+          "service": "payment"
+        },
+        "reason": "Payment service is returning errors (invalid token) for charge requests, causing checkout failures.",
+        "rollback": {
+          "reversible": true,
+          "description": "Restore 'paymentFailure' to its previous variant if verification fails."
+        },
+        "policy_note": "Runbook override: agent suggested restart_service, policy chose toggle_feature_flag for (payment, app_error).",
+        "approval_digest": "d1b8dcc7a7565af82175889f74efc3b0a61f01c35357e0e73c7515d922c10e24"
+      },
+      "human_approval": {
+        "approved": true,
+        "dry_run": false,
+        "decided_at": "2026-10-24T04:32:06Z",
+        "decided_epoch": 1792816326.4624732,
+        "approval_digest": "d1b8dcc7a7565af82175889f74efc3b0a61f01c35357e0e73c7515d922c10e24",
+        "consumed": true,
+        "operator_input": "yes",
+        "approver": "Potat"
+      },
+      "execution": {
+        "executed": true,
+        "status": "success",
+        "action_type": "toggle_feature_flag",
+        "previous_variant": "100%",
+        "detail": "Set paymentFailure -> off (was 100%)"
+      },
+      "verification": {
+        "verified": true,
+        "target_recovered": true,
+        "status": "Resolved",
+        "target_service": "payment",
+        "watched_services": [
+          "checkout",
+          "payment"
+        ],
+        "passing_samples": 2,
+        "required_samples": 2,
+        "checks": [
+          {
+            "sample": 1,
+            "timestamp": "2026-10-24T04:33:07Z",
+            "passed": true,
+            "target_ok": true,
+            "blind": [],
+            "remaining_anomalies": [],
+            "not_running": [],
+            "still_cpu_capped": [],
+            "stopped_dependencies": [],
+            "no_traffic_seen": false,
+            "other_anomalies": []
+          },
+          {
+            "sample": 2,
+            "timestamp": "2026-10-24T04:33:27Z",
+            "passed": true,
+            "target_ok": true,
+            "blind": [],
+            "remaining_anomalies": [],
+            "not_running": [],
+            "still_cpu_capped": [],
+            "stopped_dependencies": [],
+            "no_traffic_seen": false,
+            "other_anomalies": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "id": "obs-1",
+          "timestamp": "2026-10-24T04:30:47Z",
+          "tool": "triage",
+          "args": {
+            "window_min": 5
+          },
+          "finding": "6 anomalies: payment error rate 100.0% (baseline 0.0%); checkout p95 15000ms (baseline 188ms)",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-1\", \"window_min\": 5, \"baseline_offsets_min\": [15, 45], \"anomalies\": [{\"type\": \"error_rate\", \"service\": \"payment\", \"score\": 100.0, \"detail\": \"error rate 100.0% (baseline 0.0%)\"}, {\"type\": \"latency\", \"service\": \"checkout\", \"score\": 100, \"detail\": \"p95 15000ms (baseline 188ms)\"}, {\"type\": \"operation_error_rate\", \"service\": \"cart\", \"operation\": \"POST /oteldemo.CartService/EmptyCart\", \"score\": 95, \"detail\": \"operation POST /oteldemo.CartService/EmptyCart error rate 100.0%\"}, {\"type\": \"op",
+          "round": 1
+        },
+        {
+          "id": "obs-2",
+          "timestamp": "2026-10-24T04:30:48Z",
+          "tool": "container_health",
+          "args": {},
+          "finding": "20 running, hot ['ad cpu 0.74% mem 85.52%', 'astronomy-db cpu 1.78% mem 74.76%']",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-2\", \"total\": 20, \"running\": [\"ad\", \"astronomy-db\", \"cart\", \"checkout\", \"currency\", \"email\", \"frontend\", \"frontend-proxy\", \"image-provider\", \"jaeger\", \"load-generator\", \"opamp-server\", \"otel-collector\", \"payment\", \"product-catalog\", \"prometheus\", \"quote\", \"recommendation\", \"shipping\", \"valkey-cart\"], \"not_running\": [], \"restarts_or_oom\": [{\"service\": \"astronomy-db\", \"restarts\": 0, \"oom_killed\": true, \"last_start_min_ago\": 1242.2}], \"hot\": [{\"service\": \"ad\", \"cpu_pct\": 0.74, \"mem_pct_",
+          "round": 1
+        },
+        {
+          "id": "obs-3",
+          "timestamp": "2026-10-24T04:31:26Z",
+          "tool": "error_hotspots",
+          "args": {
+            "minutes": 15,
+            "service": "checkout"
+          },
+          "finding": "13/30 traces errored; root: payment charge 'Payment request failed. Invalid token. demo.user_context.lo...'",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-3\", \"service_queried\": \"checkout\", \"window_min\": 15, \"traces_checked\": 30, \"errored_traces\": 13, \"root_error_hotspots\": [{\"service\": \"payment\", \"operation\": \"charge\", \"message\": \"Payment request failed. Invalid token. demo.user_context.loyalty_level=gold\", \"count\": 8, \"example_traces\": [\"c985d3c42a9d19109bc54deaa26d4a91\", \"fc51f70fc68ae99554fb58249ab81010\"]}, {\"service\": \"cart\", \"operation\": \"POST /oteldemo.CartService/EmptyCart\", \"message\": \"Status(StatusCode=\\\"FailedPrecondition\\\"",
+          "round": 1
+        },
+        {
+          "id": "obs-4",
+          "timestamp": "2026-10-24T04:31:28Z",
+          "tool": "deploy_history",
+          "args": {
+            "minutes": 60
+          },
+          "finding": "0 recent container changes",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-4\", \"window_min\": 60, \"container_changes\": [], \"recent_agent_actions\": [], \"note\": \"a change shortly before the symptoms began is a suspect; no change is normal\"}",
+          "round": 1
+        },
+        {
+          "id": "obs-5",
+          "timestamp": "2026-10-24T04:31:29Z",
+          "tool": "get_logs",
+          "args": {
+            "minutes": 15,
+            "service": "payment"
+          },
+          "finding": "9 error lines in 60; top: '{\"level\":\"warn\",\"time\":1792816054973,\"pid\":1,\"hostname\":\"2e283fa437a1\",\"trace_id\":\"dceb2dd8d445ac960e38d6b2a5039...",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-5\", \"service\": \"payment\", \"window_min\": 15, \"lines\": 60, \"error_lines\": 9, \"top_patterns\": [{\"count\": 9, \"example\": \"{\\\"level\\\":\\\"warn\\\",\\\"time\\\":1792816054973,\\\"pid\\\":1,\\\"hostname\\\":\\\"2e283fa437a1\\\",\\\"trace_id\\\":\\\"dceb2dd8d445ac960e38d6b2a50393c5\\\",\\\"span_id\\\":\\\"3635f0df908ddfef\\\",\\\"trace_flags\\\":\"}]}",
+          "round": 1
+        }
+      ]
+    },
+    {
+      "round": 2,
+      "alert": "Detector opened an incident. Symptoms: astronomy-db: container astronomy-db restarted 0x (OOM killed: True)",
+      "diagnosis": {
+        "fault_class": "container_crash_or_restart",
+        "failing_component": "astronomy-db",
+        "cause": "The astronomy-db container was OOM\u2011killed and its logs show fatal startup errors (missing DB role), indicating it cannot stay up.",
+        "confidence": "medium",
+        "evidence": [
+          "obs-3: \"restarts_or_oom\": [{\"service\": \"astronomy-db\", \"restarts\": 0, \"oom_killed\": true, \"last_start_min_ago\": 1246.2}]",
+          "obs-5: \"top_patterns\": [{\"count\": 119, \"example\": \"2026-10-24 04:26:05.643 UTC [79295] FATAL:  role \\\"root\\\" does not exist\"}]"
+        ],
+        "dropped_ungrounded_evidence": [],
+        "secondary_findings": [],
+        "suggested_remedy": "restart a service",
+        "escalate_to_human": false
+      },
+      "action_plan": {
+        "allowed": true,
+        "escalate": false,
+        "incident_id": "inc-1792816245",
+        "proposal_version": 2,
+        "round": 2,
+        "action_type": "restart_service",
+        "target": "astronomy-db",
+        "parameters": {
+          "service_name": "astronomy-db",
+          "reset_limits": false
+        },
+        "reason": "The astronomy-db container was OOM\u2011killed and its logs show fatal startup errors (missing DB role), indicating it cannot stay up.",
+        "rollback": {
+          "reversible": false,
+          "description": "A restart has no natural inverse; if verification fails, escalate to a human."
+        },
+        "policy_note": null,
+        "approval_digest": "e4e5c7db0ee943230e914e899e10073fd2fafc76902fac9c8942871ae8d40dde"
+      },
+      "human_approval": {
+        "approved": false,
+        "dry_run": false,
+        "decided_at": "2026-10-24T04:36:05Z",
+        "decided_epoch": 1792816565.4343321,
+        "approval_digest": "e4e5c7db0ee943230e914e899e10073fd2fafc76902fac9c8942871ae8d40dde",
+        "consumed": false,
+        "operator_input": "no",
+        "approver": "Potat"
+      },
+      "execution": null,
+      "verification": null,
+      "observations": [
+        {
+          "id": "obs-1",
+          "timestamp": "2026-10-24T04:34:44Z",
+          "tool": "triage",
+          "args": {
+            "window_min": 5
+          },
+          "finding": "4 anomalies: payment error rate 50.0% (baseline 0.0%); payment operation oteldemo.PaymentService/Charge error rate 50.0%",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-1\", \"window_min\": 5, \"baseline_offsets_min\": [15, 45], \"anomalies\": [{\"type\": \"error_rate\", \"service\": \"payment\", \"score\": 50.0, \"detail\": \"error rate 50.0% (baseline 0.0%)\"}, {\"type\": \"operation_error_rate\", \"service\": \"payment\", \"operation\": \"oteldemo.PaymentService/Charge\", \"score\": 50.0, \"detail\": \"operation oteldemo.PaymentService/Charge error rate 50.0%\"}, {\"type\": \"error_rate\", \"service\": \"checkout\", \"score\": 42.9, \"detail\": \"error rate 42.9% (baseline 0.0%)\"}, {\"type\": \"oper",
+          "round": 2
+        },
+        {
+          "id": "obs-2",
+          "timestamp": "2026-10-24T04:34:45Z",
+          "tool": "metric_trend",
+          "args": {
+            "metric": "memory",
+            "minutes": 60,
+            "service": "astronomy-db"
+          },
+          "finding": "first 74.653 -> last 74.766 (x1.0, rising 0.44)",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-2\", \"query\": \"max by (container_name)(container_memory_percent_ratio{container_name=\\\"astronomy-db\\\"})\", \"window_min\": 60, \"series\": [{\"series\": {\"container_name\": \"astronomy-db\"}, \"first\": 74.653, \"last\": 74.766, \"min\": 74.653, \"max\": 74.927, \"change_ratio\": 1.0, \"monotonic_up_share\": 0.44}]}",
+          "round": 2
+        },
+        {
+          "id": "obs-3",
+          "timestamp": "2026-10-24T04:34:46Z",
+          "tool": "container_health",
+          "args": {},
+          "finding": "20 running, hot ['ad cpu 0.74% mem 85.24%', 'astronomy-db cpu 1.79% mem 74.77%']",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-3\", \"total\": 20, \"running\": [\"ad\", \"astronomy-db\", \"cart\", \"checkout\", \"currency\", \"email\", \"frontend\", \"frontend-proxy\", \"image-provider\", \"jaeger\", \"load-generator\", \"opamp-server\", \"otel-collector\", \"payment\", \"product-catalog\", \"prometheus\", \"quote\", \"recommendation\", \"shipping\", \"valkey-cart\"], \"not_running\": [], \"restarts_or_oom\": [{\"service\": \"astronomy-db\", \"restarts\": 0, \"oom_killed\": true, \"last_start_min_ago\": 1246.2}], \"hot\": [{\"service\": \"ad\", \"cpu_pct\": 0.74, \"mem_pct_",
+          "round": 2
+        },
+        {
+          "id": "obs-4",
+          "timestamp": "2026-10-24T04:35:23Z",
+          "tool": "error_hotspots",
+          "args": {
+            "minutes": 15,
+            "service": "astronomy-db"
+          },
+          "finding": "tool error: HTTPError: 404 Client Error: Not Found for url: http://localhost:57137/jaeger/ui/api/v3/t...",
+          "empty": true,
+          "output_preview": "{\"obs\": \"obs-4\", \"tool_error\": \"HTTPError: 404 Client Error: Not Found for url: http://localhost:57137/jaeger/ui/api/v3/traces?query.service_name=astronomy-db&query.start_time_min=2026-10-24T04%3A20%3A23Z&query.start_time_max=2026-10-24T04%3A35%3A23Z&query.num_traces=30\", \"evidence_note\": \"this result is empty or failed: it is not evidence of anything\"}",
+          "round": 2
+        },
+        {
+          "id": "obs-5",
+          "timestamp": "2026-10-24T04:36:04Z",
+          "tool": "get_logs",
+          "args": {
+            "minutes": 10,
+            "service": "astronomy-db"
+          },
+          "finding": "119 error lines in 119; top: '2026-10-24 04:26:05.643 UTC [79295] FATAL: role \"root\" does not exist'",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-5\", \"service\": \"astronomy-db\", \"window_min\": 10, \"lines\": 119, \"error_lines\": 119, \"top_patterns\": [{\"count\": 119, \"example\": \"2026-10-24 04:26:05.643 UTC [79295] FATAL:  role \\\"root\\\" does not exist\"}]}",
+          "round": 2
+        }
+      ]
+    }
+  ],
+  "prevention_recommendation": [
+    "Add canary checks and automatic rollback for faulty releases; alert on per-operation error rate.",
+    "Alert at 80% of the memory limit and enforce liveness/readiness probes."
+  ],
+  "observations": [
+    {
+      "id": "obs-1",
+      "timestamp": "2026-10-24T04:30:47Z",
+      "tool": "triage",
+      "args": {
+        "window_min": 5
+      },
+      "finding": "6 anomalies: payment error rate 100.0% (baseline 0.0%); checkout p95 15000ms (baseline 188ms)",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-1\", \"window_min\": 5, \"baseline_offsets_min\": [15, 45], \"anomalies\": [{\"type\": \"error_rate\", \"service\": \"payment\", \"score\": 100.0, \"detail\": \"error rate 100.0% (baseline 0.0%)\"}, {\"type\": \"latency\", \"service\": \"checkout\", \"score\": 100, \"detail\": \"p95 15000ms (baseline 188ms)\"}, {\"type\": \"operation_error_rate\", \"service\": \"cart\", \"operation\": \"POST /oteldemo.CartService/EmptyCart\", \"score\": 95, \"detail\": \"operation POST /oteldemo.CartService/EmptyCart error rate 100.0%\"}, {\"type\": \"op",
+      "round": 1
+    },
+    {
+      "id": "obs-2",
+      "timestamp": "2026-10-24T04:30:48Z",
+      "tool": "container_health",
+      "args": {},
+      "finding": "20 running, hot ['ad cpu 0.74% mem 85.52%', 'astronomy-db cpu 1.78% mem 74.76%']",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-2\", \"total\": 20, \"running\": [\"ad\", \"astronomy-db\", \"cart\", \"checkout\", \"currency\", \"email\", \"frontend\", \"frontend-proxy\", \"image-provider\", \"jaeger\", \"load-generator\", \"opamp-server\", \"otel-collector\", \"payment\", \"product-catalog\", \"prometheus\", \"quote\", \"recommendation\", \"shipping\", \"valkey-cart\"], \"not_running\": [], \"restarts_or_oom\": [{\"service\": \"astronomy-db\", \"restarts\": 0, \"oom_killed\": true, \"last_start_min_ago\": 1242.2}], \"hot\": [{\"service\": \"ad\", \"cpu_pct\": 0.74, \"mem_pct_",
+      "round": 1
+    },
+    {
+      "id": "obs-3",
+      "timestamp": "2026-10-24T04:31:26Z",
+      "tool": "error_hotspots",
+      "args": {
+        "minutes": 15,
+        "service": "checkout"
+      },
+      "finding": "13/30 traces errored; root: payment charge 'Payment request failed. Invalid token. demo.user_context.lo...'",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-3\", \"service_queried\": \"checkout\", \"window_min\": 15, \"traces_checked\": 30, \"errored_traces\": 13, \"root_error_hotspots\": [{\"service\": \"payment\", \"operation\": \"charge\", \"message\": \"Payment request failed. Invalid token. demo.user_context.loyalty_level=gold\", \"count\": 8, \"example_traces\": [\"c985d3c42a9d19109bc54deaa26d4a91\", \"fc51f70fc68ae99554fb58249ab81010\"]}, {\"service\": \"cart\", \"operation\": \"POST /oteldemo.CartService/EmptyCart\", \"message\": \"Status(StatusCode=\\\"FailedPrecondition\\\"",
+      "round": 1
+    },
+    {
+      "id": "obs-4",
+      "timestamp": "2026-10-24T04:31:28Z",
+      "tool": "deploy_history",
+      "args": {
+        "minutes": 60
+      },
+      "finding": "0 recent container changes",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-4\", \"window_min\": 60, \"container_changes\": [], \"recent_agent_actions\": [], \"note\": \"a change shortly before the symptoms began is a suspect; no change is normal\"}",
+      "round": 1
+    },
+    {
+      "id": "obs-5",
+      "timestamp": "2026-10-24T04:31:29Z",
+      "tool": "get_logs",
+      "args": {
+        "minutes": 15,
+        "service": "payment"
+      },
+      "finding": "9 error lines in 60; top: '{\"level\":\"warn\",\"time\":1792816054973,\"pid\":1,\"hostname\":\"2e283fa437a1\",\"trace_id\":\"dceb2dd8d445ac960e38d6b2a5039...",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-5\", \"service\": \"payment\", \"window_min\": 15, \"lines\": 60, \"error_lines\": 9, \"top_patterns\": [{\"count\": 9, \"example\": \"{\\\"level\\\":\\\"warn\\\",\\\"time\\\":1792816054973,\\\"pid\\\":1,\\\"hostname\\\":\\\"2e283fa437a1\\\",\\\"trace_id\\\":\\\"dceb2dd8d445ac960e38d6b2a50393c5\\\",\\\"span_id\\\":\\\"3635f0df908ddfef\\\",\\\"trace_flags\\\":\"}]}",
+      "round": 1
+    },
+    {
+      "id": "obs-1",
+      "timestamp": "2026-10-24T04:34:44Z",
+      "tool": "triage",
+      "args": {
+        "window_min": 5
+      },
+      "finding": "4 anomalies: payment error rate 50.0% (baseline 0.0%); payment operation oteldemo.PaymentService/Charge error rate 50.0%",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-1\", \"window_min\": 5, \"baseline_offsets_min\": [15, 45], \"anomalies\": [{\"type\": \"error_rate\", \"service\": \"payment\", \"score\": 50.0, \"detail\": \"error rate 50.0% (baseline 0.0%)\"}, {\"type\": \"operation_error_rate\", \"service\": \"payment\", \"operation\": \"oteldemo.PaymentService/Charge\", \"score\": 50.0, \"detail\": \"operation oteldemo.PaymentService/Charge error rate 50.0%\"}, {\"type\": \"error_rate\", \"service\": \"checkout\", \"score\": 42.9, \"detail\": \"error rate 42.9% (baseline 0.0%)\"}, {\"type\": \"oper",
+      "round": 2
+    },
+    {
+      "id": "obs-2",
+      "timestamp": "2026-10-24T04:34:45Z",
+      "tool": "metric_trend",
+      "args": {
+        "metric": "memory",
+        "minutes": 60,
+        "service": "astronomy-db"
+      },
+      "finding": "first 74.653 -> last 74.766 (x1.0, rising 0.44)",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-2\", \"query\": \"max by (container_name)(container_memory_percent_ratio{container_name=\\\"astronomy-db\\\"})\", \"window_min\": 60, \"series\": [{\"series\": {\"container_name\": \"astronomy-db\"}, \"first\": 74.653, \"last\": 74.766, \"min\": 74.653, \"max\": 74.927, \"change_ratio\": 1.0, \"monotonic_up_share\": 0.44}]}",
+      "round": 2
+    },
+    {
+      "id": "obs-3",
+      "timestamp": "2026-10-24T04:34:46Z",
+      "tool": "container_health",
+      "args": {},
+      "finding": "20 running, hot ['ad cpu 0.74% mem 85.24%', 'astronomy-db cpu 1.79% mem 74.77%']",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-3\", \"total\": 20, \"running\": [\"ad\", \"astronomy-db\", \"cart\", \"checkout\", \"currency\", \"email\", \"frontend\", \"frontend-proxy\", \"image-provider\", \"jaeger\", \"load-generator\", \"opamp-server\", \"otel-collector\", \"payment\", \"product-catalog\", \"prometheus\", \"quote\", \"recommendation\", \"shipping\", \"valkey-cart\"], \"not_running\": [], \"restarts_or_oom\": [{\"service\": \"astronomy-db\", \"restarts\": 0, \"oom_killed\": true, \"last_start_min_ago\": 1246.2}], \"hot\": [{\"service\": \"ad\", \"cpu_pct\": 0.74, \"mem_pct_",
+      "round": 2
+    },
+    {
+      "id": "obs-4",
+      "timestamp": "2026-10-24T04:35:23Z",
+      "tool": "error_hotspots",
+      "args": {
+        "minutes": 15,
+        "service": "astronomy-db"
+      },
+      "finding": "tool error: HTTPError: 404 Client Error: Not Found for url: http://localhost:57137/jaeger/ui/api/v3/t...",
+      "empty": true,
+      "output_preview": "{\"obs\": \"obs-4\", \"tool_error\": \"HTTPError: 404 Client Error: Not Found for url: http://localhost:57137/jaeger/ui/api/v3/traces?query.service_name=astronomy-db&query.start_time_min=2026-10-24T04%3A20%3A23Z&query.start_time_max=2026-10-24T04%3A35%3A23Z&query.num_traces=30\", \"evidence_note\": \"this result is empty or failed: it is not evidence of anything\"}",
+      "round": 2
+    },
+    {
+      "id": "obs-5",
+      "timestamp": "2026-10-24T04:36:04Z",
+      "tool": "get_logs",
+      "args": {
+        "minutes": 10,
+        "service": "astronomy-db"
+      },
+      "finding": "119 error lines in 119; top: '2026-10-24 04:26:05.643 UTC [79295] FATAL: role \"root\" does not exist'",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-5\", \"service\": \"astronomy-db\", \"window_min\": 10, \"lines\": 119, \"error_lines\": 119, \"top_patterns\": [{\"count\": 119, \"example\": \"2026-10-24 04:26:05.643 UTC [79295] FATAL:  role \\\"root\\\" does not exist\"}]}",
+      "round": 2
+    }
+  ],
+  "llm_usage": [
+    {
+      "provider": "groq:openai/gpt-oss-120b",
+      "calls": 13,
+      "tokens": 29406,
+      "daily_quota_hit": false
+    }
+  ],
+  "remaining_symptoms": [
+    "astronomy-db: container astronomy-db restarted 0x (OOM killed: True)"
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "fault_class": "app_error",
+  "failing_component": "payment",
+  "cause": "Payment service is emitting error\u2011level logs and returning \"Invalid token\" errors for charge operations, which cascade to checkout failures.",
+  "confidence": "medium",
+  "evidence": [
+    "obs-1: p95 15000ms (baseline 355ms) for checkout latency",
+    "obs-3: root_error_hotspots payment operation charge message \"Payment request failed. Invalid token...\" count 5"
+  ],
+  "dropped_ungrounded_evidence": [
+    "obs-4: top_patterns count 5 example log line with level \"warn\" and trace_id showing payment request failure"
+  ],
+  "secondary_findings": [
+    "cart: connection failures to Redis storage"
+  ],
+  "suggested_remedy": "restart a service",
+  "escalate_to_human": false,
+  "incident_id": "inc-1792816125"
+}

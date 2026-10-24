@@ -290,10 +290,13 @@ class ActionApiTests(unittest.TestCase):
         self.assertEqual(len(p["approval_digest"]), 64)
 
     def test_policy_escalates_when_it_should(self):
-        self.assertTrue(self.plan(confidence="low")["escalate"])
-        self.assertTrue(self.plan(escalate_to_human=True)["escalate"])
-        self.assertTrue(self.plan(suggested_remedy="none/escalate")["escalate"])
-        self.assertTrue(self.plan(suggested_remedy="format the disk")["escalate"])
+        self.assertTrue(self.plan(confidence="low", failing_component="currency")["escalate"])  # low + no runbook mapping
+        self.assertFalse(self.plan(confidence="low").get("escalate", False))  # low + runbook mapping → still proposed
+        self.assertTrue(self.plan(confidence="low")["allowed"])  # human gets to decide
+        self.assertTrue(self.plan(escalate_to_human=True, failing_component="currency")["escalate"])  # hesitant + no runbook
+        self.assertTrue(self.plan(escalate_to_human=True)["allowed"])  # hesitant + runbook → human decides
+        self.assertTrue(self.plan(suggested_remedy="none/escalate", failing_component="currency")["escalate"])
+        self.assertTrue(self.plan(suggested_remedy="format the disk", failing_component="currency")["escalate"])
         self.assertTrue(self.plan(failing_component="flagd")["escalate"])
         self.assertTrue(self.plan(failing_component="shipping", suggested_remedy="restart a service")["escalate"])  # never observed
         self.assertTrue(self.plan(failing_component="frontend-proxy", suggested_remedy="restart a service")["escalate"])  # protected
@@ -309,8 +312,12 @@ class ActionApiTests(unittest.TestCase):
         self.assertTrue(p["allowed"])
         self.assertEqual(p["parameters"]["flag_name"], "paymentFailure")
         self.assertIn("YOUR decision", p["policy_note"])
-        self.assertTrue(action_api.build_action_plan("i", {**d, "confidence": "low"}, {"payment"})["escalate"])
-        self.assertTrue(action_api.build_action_plan("i", {**d, "evidence": d["evidence"][:1]}, {"payment"})["escalate"])
+        low_plan = action_api.build_action_plan("i", {**d, "confidence": "low"}, {"payment"})
+        self.assertTrue(low_plan["allowed"])  # low confidence + known runbook → human decides
+        self.assertIn("LOW CONFIDENCE", low_plan["policy_note"])
+        thin_plan = action_api.build_action_plan("i", {**d, "evidence": d["evidence"][:1]}, {"payment"})
+        self.assertTrue(thin_plan["allowed"])  # thin evidence + known runbook → human still gets to decide
+        self.assertIn("LOW CONFIDENCE", thin_plan["policy_note"])
 
     def test_policy_overrides_pointless_restart_with_switch_fix(self):
         """Regression: LLM proposed restarting cart for an app-level fault; a restart cannot clear it."""

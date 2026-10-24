@@ -163,11 +163,8 @@ def build_action_plan(incident_id: str, diagnosis: dict, observed_services: set,
     The LLM's suggested remedy is only a hint. The runbook decides: a container that is actually down is
     restarted; an application-level fault with a known remediation switch gets that switch turned off
     (a restart cannot clear it). Any override is recorded in plan["policy_note"] and shown to the human."""
-    # Low confidence always goes to a human. A model that hesitates despite solid evidence (medium/high confidence,
-    # 2+ verified items) still gets its fix proposed: the human at the approval gate makes that call, not the model.
     hesitated = bool(diagnosis.get("escalate_to_human"))
-    if diagnosis.get("confidence") == "low" or (hesitated and len(diagnosis.get("evidence") or []) < 2):
-        return _escalate(incident_id, "Diagnosis confidence is low or escalation was requested by the agent.")
+    low_confidence = diagnosis.get("confidence") == "low" or (hesitated and len(diagnosis.get("evidence") or []) < 2)
 
     remedy = str(diagnosis.get("suggested_remedy", "")).lower()
     comp = str(diagnosis.get("failing_component", "")).strip()
@@ -175,12 +172,15 @@ def build_action_plan(incident_id: str, diagnosis: dict, observed_services: set,
     cause = str(diagnosis.get("cause", "")).lower()
 
     action_type = next((a for kw, a in REMEDY_KEYWORDS if kw in remedy), None)
-    if action_type is None and hesitated:  # the model named no remedy; take the runbook's
+    if action_type is None:  # the model named no actionable remedy; consult the runbook
         if comp in down_services:
             action_type = "restart_service"
         elif (comp, fault_class) in SERVICE_TO_FAULT_FLAG:
             action_type = "toggle_feature_flag"
+    # Low confidence with no runbook mapping: escalate. With a mapping: still propose and let the human decide.
     if action_type not in ALLOWED_ACTIONS:
+        if low_confidence:
+            return _escalate(incident_id, "Diagnosis confidence is low or escalation was requested by the agent.")
         return _escalate(incident_id, f"Proposed remedy {diagnosis.get('suggested_remedy')!r} is not in the Action API allowlist.")
     if comp not in ALLOWED_SERVICES:
         return _escalate(incident_id, f"Failing component {comp!r} is not an allowlisted service.")
@@ -200,7 +200,10 @@ def build_action_plan(incident_id: str, diagnosis: dict, observed_services: set,
     if preferred != action_type and action_type != "throttle_load_generator":
         policy_note = f"Runbook override: agent suggested {action_type}, policy chose {preferred} for ({comp}, {fault_class})."
         action_type = preferred
-    if hesitated:
+    if low_confidence:
+        policy_note = ("LOW CONFIDENCE: the agent is not sure about this diagnosis. Review the evidence carefully. "
+                       "Type 'no' to skip this fix and escalate to a human." + (f" {policy_note}" if policy_note else ""))
+    elif hesitated:
         policy_note = ("The model wanted a human to look (see its findings); the evidence is strong enough to propose "
                        "this fix for YOUR decision. Type 'no' to leave it to a human." + (f" {policy_note}" if policy_note else ""))
 

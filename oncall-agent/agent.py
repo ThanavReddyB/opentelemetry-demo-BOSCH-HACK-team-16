@@ -77,7 +77,8 @@ Rules of proof
 - checkout fails calling payment and payment shows its own error spans -> payment app_error.
 - checkout cannot connect to payment and payment gets no traffic -> payment dependency_down.
 - dependency_down needs positive proof: the dependency is in container_health not_running, or gets zero traffic.
-  "can't connect to redis" also appears when cart itself is broken while valkey-cart runs: check container state.
+  "can't connect to redis" or "can't access cart storage" also appears when cart itself is broken while valkey-cart
+  runs fine: if valkey-cart is in the running list, the fault is cart app_error, not dependency_down or cpu_saturation.
 - A service absent from not_running/hot/cpu_limited is healthy. topology is structure, not evidence.
 - valkey-cart and astronomy-db have no span metrics; judge them by container_health.
 - Errors only for some requests (one product id) -> attribute_skew -> partial_failure.
@@ -85,10 +86,14 @@ Rules of proof
 - A cpu_limited container that is slow -> resource_starvation.
 - Memory rising steadily (metric_trend memory, monotonic_up_share near 1) -> memory_leak.
 - Slow but not failing inside one service -> latency_regression; heavy CPU or GC -> cpu_saturation.
+- CPU metrics are ratios: 1.0 = 100% of one core (e.g. value 5.4 = 540% across cores, which is very high).
+- ad service with CPU value >0.5 (>50%) and memory >70% without errors is cpu_saturation (medium confidence); suggest "toggle a feature flag".
 - Request-rate surge at frontend with rising latency -> traffic_flood.
 - Several independent faults can coexist: report the strongest as primary and every other one in
   secondary_findings as "<service>: <what is wrong>".
 - Thin or conflicting evidence -> confidence "low" and escalate_to_human true. Escalating beats a confident wrong fix.
+- When you identify a fault, always suggest a concrete remedy ("toggle a feature flag", "restart a service", etc.)
+  rather than "none/escalate". Use "none/escalate" ONLY when you truly cannot determine the fault class.
 - A fault that returns after an earlier fix (deploy_history recent_agent_actions) is a recurrence, not doubt:
   still propose the fix, and add "recurrence: <what was done before>" to secondary_findings so the human sees it.
 
