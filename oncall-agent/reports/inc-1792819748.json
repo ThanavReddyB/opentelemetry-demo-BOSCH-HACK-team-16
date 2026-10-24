@@ -1,0 +1,79 @@
+{
+  "incident_id": "inc-1792819748",
+  "status": "Escalated",
+  "alert": "Detector opened an incident. Symptoms: kafka: container kafka under pressure: cpu 3.17%, memory 96.02% of limit",
+  "timeline": {
+    "detected_at": "2026-10-24T05:29:08Z",
+    "completed_at": "2026-10-24T05:29:08Z",
+    "tool_calls_count": 0,
+    "rounds": 1
+  },
+  "diagnosis": {
+    "fault_class": "unknown",
+    "failing_component": "unknown",
+    "cause": "Investigation halted immediately because the kill switch is active.",
+    "confidence": "low",
+    "evidence": [],
+    "dropped_ungrounded_evidence": [],
+    "secondary_findings": [],
+    "suggested_remedy": "none/escalate",
+    "escalate_to_human": true,
+    "kill_switch_aborted": true
+  },
+  "action_plan": {
+    "allowed": false,
+    "escalate": true,
+    "incident_id": "inc-1792819748",
+    "reason": "Diagnosis confidence is low or escalation was requested by the agent."
+  },
+  "human_approval": null,
+  "execution": null,
+  "verification": null,
+  "rounds": [
+    {
+      "round": 1,
+      "alert": "Detector opened an incident. Symptoms: kafka: container kafka under pressure: cpu 3.17%, memory 96.02% of limit",
+      "diagnosis": {
+        "fault_class": "unknown",
+        "failing_component": "unknown",
+        "cause": "Investigation halted immediately because the kill switch is active.",
+        "confidence": "low",
+        "evidence": [],
+        "dropped_ungrounded_evidence": [],
+        "secondary_findings": [],
+        "suggested_remedy": "none/escalate",
+        "escalate_to_human": true,
+        "kill_switch_aborted": true
+      },
+      "action_plan": {
+        "allowed": false,
+        "escalate": true,
+        "incident_id": "inc-1792819748",
+        "reason": "Diagnosis confidence is low or escalation was requested by the agent."
+      },
+      "human_approval": null,
+      "execution": null,
+      "verification": null,
+      "observations": []
+    }
+  ],
+  "prevention_recommendation": [
+    "Add targeted service-level alerts and runbook automation for this failure mode."
+  ],
+  "observations": [],
+  "llm_usage": [
+    {
+      "provider": "groq:openai/gpt-oss-120b",
+      "calls": 1,
+      "tokens": 2220,
+      "daily_quota_hit": false
+    },
+    {
+      "provider": "groq:openai/gpt-oss-120b",
+      "calls": 2,
+      "tokens": 3635,
+      "daily_quota_hit": true
+    }
+  ],
+  "remaining_symptoms": []
+}

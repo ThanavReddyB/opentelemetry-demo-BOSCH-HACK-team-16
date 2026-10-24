@@ -1,0 +1,151 @@
+{
+  "incident_id": "inc-1792819619",
+  "status": "Escalated",
+  "alert": "Detector opened an incident. Symptoms: kafka: container kafka under pressure: cpu 3.19%, memory 95.95% of limit",
+  "timeline": {
+    "detected_at": "2026-10-24T05:26:59Z",
+    "completed_at": "2026-10-24T05:28:52Z",
+    "tool_calls_count": 3,
+    "rounds": 1
+  },
+  "diagnosis": {
+    "fault_class": "unknown",
+    "failing_component": "unknown",
+    "cause": "Investigation halted immediately because the kill switch is active.",
+    "confidence": "low",
+    "evidence": [],
+    "dropped_ungrounded_evidence": [],
+    "secondary_findings": [],
+    "suggested_remedy": "none/escalate",
+    "escalate_to_human": true,
+    "kill_switch_aborted": true
+  },
+  "action_plan": {
+    "allowed": false,
+    "escalate": true,
+    "incident_id": "inc-1792819619",
+    "reason": "Diagnosis confidence is low or escalation was requested by the agent."
+  },
+  "human_approval": null,
+  "execution": null,
+  "verification": null,
+  "rounds": [
+    {
+      "round": 1,
+      "alert": "Detector opened an incident. Symptoms: kafka: container kafka under pressure: cpu 3.19%, memory 95.95% of limit",
+      "diagnosis": {
+        "fault_class": "unknown",
+        "failing_component": "unknown",
+        "cause": "Investigation halted immediately because the kill switch is active.",
+        "confidence": "low",
+        "evidence": [],
+        "dropped_ungrounded_evidence": [],
+        "secondary_findings": [],
+        "suggested_remedy": "none/escalate",
+        "escalate_to_human": true,
+        "kill_switch_aborted": true
+      },
+      "action_plan": {
+        "allowed": false,
+        "escalate": true,
+        "incident_id": "inc-1792819619",
+        "reason": "Diagnosis confidence is low or escalation was requested by the agent."
+      },
+      "human_approval": null,
+      "execution": null,
+      "verification": null,
+      "observations": [
+        {
+          "id": "obs-1",
+          "timestamp": "2026-10-24T05:27:01Z",
+          "tool": "triage",
+          "args": {
+            "window_min": 5
+          },
+          "finding": "1 anomalies: recommendation error rate 15.0% (baseline 5.0%)",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-1\", \"window_min\": 5, \"baseline_offsets_min\": [15, 45], \"anomalies\": [{\"type\": \"error_rate\", \"service\": \"recommendation\", \"score\": 15.0, \"detail\": \"error rate 15.0% (baseline 5.0%)\"}], \"service_rates\": {\"currency\": 0.0875, \"image-provider\": 0.4375, \"ad\": 0.1333, \"frontend-proxy\": 2.9086, \"telemetry-docs\": 0.2, \"recommendation\": 0.0833, \"frontend\": 3.2253, \"cart\": 0.35, \"quote\": 0.0, \"shipping\": 0.0, \"payment\": 0.0, \"product-catalog\": 0.0}, \"containers\": {\"hot\": [{\"service\": \"ad\", \"cp",
+          "round": 1
+        },
+        {
+          "id": "obs-2",
+          "timestamp": "2026-10-24T05:27:03Z",
+          "tool": "container_health",
+          "args": {},
+          "finding": "23 running, hot ['ad cpu 1.15% mem 78.92%', 'astronomy-db cpu 1.18% mem 74.82%']",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-2\", \"total\": 23, \"running\": [\"accounting\", \"ad\", \"astronomy-db\", \"cart\", \"checkout\", \"currency\", \"email\", \"fraud-detection\", \"frontend\", \"frontend-proxy\", \"image-provider\", \"jaeger\", \"kafka\", \"load-generator\", \"opamp-server\", \"otel-collector\", \"payment\", \"product-catalog\", \"prometheus\", \"quote\", \"recommendation\", \"shipping\", \"valkey-cart\"], \"not_running\": [], \"restarts_or_oom\": [], \"hot\": [{\"service\": \"ad\", \"cpu_pct\": 1.15, \"mem_pct_of_limit\": 78.92}, {\"service\": \"astronomy-db\", \"cp",
+          "round": 1
+        },
+        {
+          "id": "obs-3",
+          "timestamp": "2026-10-24T05:28:52Z",
+          "tool": "error_hotspots",
+          "args": {
+            "minutes": 15,
+            "service": "recommendation"
+          },
+          "finding": "0/30 traces errored; no root errors",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-3\", \"service_queried\": \"recommendation\", \"window_min\": 15, \"traces_checked\": 30, \"errored_traces\": 0, \"root_error_hotspots\": []}",
+          "round": 1
+        }
+      ]
+    }
+  ],
+  "prevention_recommendation": [
+    "Add targeted service-level alerts and runbook automation for this failure mode."
+  ],
+  "observations": [
+    {
+      "id": "obs-1",
+      "timestamp": "2026-10-24T05:27:01Z",
+      "tool": "triage",
+      "args": {
+        "window_min": 5
+      },
+      "finding": "1 anomalies: recommendation error rate 15.0% (baseline 5.0%)",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-1\", \"window_min\": 5, \"baseline_offsets_min\": [15, 45], \"anomalies\": [{\"type\": \"error_rate\", \"service\": \"recommendation\", \"score\": 15.0, \"detail\": \"error rate 15.0% (baseline 5.0%)\"}], \"service_rates\": {\"currency\": 0.0875, \"image-provider\": 0.4375, \"ad\": 0.1333, \"frontend-proxy\": 2.9086, \"telemetry-docs\": 0.2, \"recommendation\": 0.0833, \"frontend\": 3.2253, \"cart\": 0.35, \"quote\": 0.0, \"shipping\": 0.0, \"payment\": 0.0, \"product-catalog\": 0.0}, \"containers\": {\"hot\": [{\"service\": \"ad\", \"cp",
+      "round": 1
+    },
+    {
+      "id": "obs-2",
+      "timestamp": "2026-10-24T05:27:03Z",
+      "tool": "container_health",
+      "args": {},
+      "finding": "23 running, hot ['ad cpu 1.15% mem 78.92%', 'astronomy-db cpu 1.18% mem 74.82%']",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-2\", \"total\": 23, \"running\": [\"accounting\", \"ad\", \"astronomy-db\", \"cart\", \"checkout\", \"currency\", \"email\", \"fraud-detection\", \"frontend\", \"frontend-proxy\", \"image-provider\", \"jaeger\", \"kafka\", \"load-generator\", \"opamp-server\", \"otel-collector\", \"payment\", \"product-catalog\", \"prometheus\", \"quote\", \"recommendation\", \"shipping\", \"valkey-cart\"], \"not_running\": [], \"restarts_or_oom\": [], \"hot\": [{\"service\": \"ad\", \"cpu_pct\": 1.15, \"mem_pct_of_limit\": 78.92}, {\"service\": \"astronomy-db\", \"cp",
+      "round": 1
+    },
+    {
+      "id": "obs-3",
+      "timestamp": "2026-10-24T05:28:52Z",
+      "tool": "error_hotspots",
+      "args": {
+        "minutes": 15,
+        "service": "recommendation"
+      },
+      "finding": "0/30 traces errored; no root errors",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-3\", \"service_queried\": \"recommendation\", \"window_min\": 15, \"traces_checked\": 30, \"errored_traces\": 0, \"root_error_hotspots\": []}",
+      "round": 1
+    }
+  ],
+  "llm_usage": [
+    {
+      "provider": "groq:openai/gpt-oss-120b",
+      "calls": 1,
+      "tokens": 2220,
+      "daily_quota_hit": false
+    },
+    {
+      "provider": "groq:openai/gpt-oss-120b",
+      "calls": 2,
+      "tokens": 3635,
+      "daily_quota_hit": true
+    }
+  ],
+  "remaining_symptoms": []
+}

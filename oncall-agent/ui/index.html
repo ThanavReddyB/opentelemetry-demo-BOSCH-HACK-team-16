@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Incident Zero: On-Call Console</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div id="kb" class="banner" hidden>Kill switch is ON: the agent will not investigate, approve or change anything.</div>
+  <header>
+    <h1>Incident Zero</h1>
+    <span id="pill" class="pill s-idle">idle</span>
+    <label><input id="dry" type="checkbox"> dry-run</label>
+    <button class="go" id="start">Run agent</button>
+    <label><input id="watch" type="checkbox"> auto-detect</label>
+    <button class="kill" id="kill">Stop / Kill switch</button>
+    <a class="nav-link" href="/reports">Reports Dashboard &rarr;</a>
+  </header>
+
+  <main>
+    <nav aria-label="Incident progress">
+      <ol id="steps"></ol>
+    </nav>
+    <div id="view">
+      <section>
+        <h2>Ready</h2>
+        <p class="muted" style="margin:0">
+          Press <strong>Run agent</strong>. It first checks the system for faults. If everything is healthy it stops there.
+          If a fault is found, the agent investigates, asks for your approval right here, verifies recovery, and then opens the Reports Dashboard.
+        </p>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    const $ = id => document.getElementById(id);
+    const E = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+    const STEPS = ["Detect", "Investigate", "Diagnose", "Propose a fix", "Human approval", "Act and verify", "Report"];
+    const WHAT = {
+      triage: "Scanned every service against its normal baseline",
+      container_health: "Checked container health",
+      deploy_history: "Looked at recent restarts and deployments",
+      error_hotspots: "Traced where the errors start",
+      get_logs: "Read service logs",
+      get_metrics: "Queried metrics",
+      metric_trend: "Checked how a metric is trending",
+      attribute_skew: "Looked for what the failing requests have in common",
+      edge_latency_gap: "Compared caller and callee latency",
+      topology: "Looked up who calls whom",
+      trace_detail: "Opened a single trace"
+    };
+    const CHOICE = {
+      yes: "approved the action",
+      no: "rejected the action",
+      "dry-run": "chose a dry-run (nothing changed)"
+    };
+    const post = (u, b) => fetch(u, {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(b || {})
+    }).then(r => r.json());
+
+    let S = {}, busy = false, startedInThisTab = false, redirectedForIncident = null;
+
+    function cur(s) {
+      const ev = (s.audit || []).map(a => a.event);
+      const lr = [...(s.feed || [])].reverse().find(e => e.kind === "round");
+      if (s.status === "idle") return -1;
+      if (s.status === "scanning") return 0;
+      if (s.status === "healthy") return 1;
+      if (s.status === "done" || s.status === "error") return 7;
+      if (s.status === "awaiting_approval") return 4;
+      if (lr && /investigating/.test(lr.text)) return 1;
+      if (ev.includes("recovery_verified")) return 6;
+      if (ev.includes("action_executed") || ev.includes("action_dry_run")) return 5;
+      return s.diagnosis ? 3 : ((s.feed || []).some(e => e.kind === "tool") ? 1 : 0);
+    }
+
+    function scanCard(s) {
+      if (s.status === "scanning") {
+        return `<section><h2>System check</h2><p style="margin:0">Scanning metrics, traces and containers for faults...</p></section>`;
+      }
+      if (s.scan) {
+        const a = s.scan.anomalies || [];
+        if (!a.length) {
+          return `<section class="good"><h2>No fault detected</h2><p style="margin:0">All services look normal as of ${E(s.scan.at)}. The agent was not called.</p></section>`;
+        }
+        return `<section class="bad"><h2>Fault detected</h2><p class="muted" style="margin-top:0">${a.length} symptom${a.length > 1 ? "s" : ""} found at ${E(s.scan.at)}. The agent is now working out the cause.</p>${a.map(x => `<div class="row"><strong style="min-width:130px">${E(x.service)}</strong><span>${E(x.detail)}</span></div>`).join("")}</section>`;
+      }
+      return s.alert ? `<section class="bad"><h2>Fault detected</h2><p style="margin:0">${E(s.alert)}</p></section>` : "";
+    }
+
+    function feed(f) {
+      if (!f || !f.length) return "";
+      return `<section><h2>What the agent is doing</h2><div id="feed">${f.map(e => {
+        if (e.kind === "think") return `<p class="think">${E(e.text)}</p>`;
+        if (e.kind === "tool") return `<div class="row"><span class="id">${E(e.id)}</span><span><strong>${E(WHAT[e.tool] || e.tool)}</strong><br><span class="${/empty|failed/.test(e.text) ? "empty" : "muted"}">${E(e.text)}</span></span></div>`;
+        if (e.kind === "round") return `<h3>${E(e.text)}</h3>`;
+        if (e.kind === "escalate") return `<p class="empty"><strong>${E(e.text)}</strong></p>`;
+        return e.kind === "note" ? `<p class="muted" style="margin:4px 0;font-size:13px">${E(e.text)}</p>` : "";
+      }).join("")}</div></section>`;
+    }
+
+    function diag(d) {
+      if (!d) return "";
+      const c = d.confidence || "low";
+      return `<section><h2>Diagnosis</h2><div class="kv"><b>Component</b><span><strong>${E(d.failing_component)}</strong> (${E(d.fault_class)})</span><b>Confidence</b><span class="conf-${E(c)}"><strong>${E(c)}</strong></span><b>Root cause</b><span>${E(d.cause)}</span></div>
+      <p style="margin:10px 0 2px" class="muted">Evidence (checked against tool output)</p><ul>${(d.evidence || []).map(e => `<li>${E(e)}</li>`).join("") || "<li>none verified, so the agent escalates</li>"}</ul>
+      ${(d.secondary_findings || []).length ? `<p style="margin:10px 0 2px" class="muted">Also seen</p><ul>${d.secondary_findings.map(e => `<li>${E(e)}</li>`).join("")}</ul>` : ""}</section>`;
+    }
+
+    function gate(p) {
+      if (!p) return "";
+      const pl = p.plan;
+      const left = Math.max(0, Math.round(p.ttl - (Date.now() / 1000 - p.asked_at)));
+      return `<section class="gate"><h2>Your decision: approve this exact action?</h2>
+        <div class="kv">
+          <b>Action</b><span><strong>${E(pl.action_type)}</strong> on <strong>${E(pl.target)}</strong></span>
+          <b>Parameters</b><code>${E(JSON.stringify(pl.parameters))}</code>
+          <b>Why</b><span>${E(pl.reason)}</span>
+          <b>If it fails</b><span>${E(pl.rollback?.description)}</span>
+          ${pl.policy_note ? `<b>Policy note</b><span>${E(pl.policy_note)}</span>` : ""}
+          <b>Digest</b><code>${E(pl.approval_digest.slice(0, 16))}</code>
+          <b>Expires in</b><span>${left}s</span>
+        </div>
+        <p style="display:flex;gap:10px;margin:14px 0 0">
+          <button class="ok" data-c="yes">Approve and execute</button>
+          <button data-c="dry-run">Dry-run only</button>
+          <button class="kill" data-c="no">Reject</button>
+        </p>
+      </section>`;
+    }
+
+    function human(s) {
+      if (s.pending) return "";
+      const ds = (s.audit || []).filter(a => a.event === "approval_decision");
+      const ex = (s.audit || []).filter(a => ["action_executed", "action_dry_run", "execution_refused"].includes(a.event));
+      if (!ds.length) return "";
+      return `<section><h2>Human action</h2>${ds.map((d, i) => `<div class="row"><span class="id" style="min-width:64px">${E((d.t || "").slice(11, 19))}</span><span><strong>${E(d.approver || "operator")}</strong> ${E(CHOICE[d.choice] || d.choice)}${ex[i] ? `<br><span class="muted">${E(ex[i].event.replace(/_/g, " "))}: ${E(ex[i].status || "")}</span>` : ""}</span></div>`).join("")}</section>`;
+    }
+
+    function doneBanner(s) {
+      const r = s.report;
+      if (!r) return "";
+      const incId = r.incident_id || "";
+      return `<section class="good">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+          <div>
+            <h2 style="margin:0 0 4px">Latest Report Generated: <code>${E(incId)}</code></h2>
+            <p class="muted" style="margin:0">Status: <strong>${E((r.status || "").replace(/_/g, " "))}</strong> · Agent continues monitoring until Kill Switch is activated.</p>
+          </div>
+          <button class="go" onclick="window.location.href='/reports?id=${encodeURIComponent(incId)}'">View Latest Report &rarr;</button>
+        </div>
+      </section>`;
+    }
+
+    function render(s) {
+      S = s;
+      const n = cur(s);
+      const act = ["scanning", "running", "awaiting_approval", "healthy"].includes(s.status);
+      const fe = $("feed");
+      const stick = fe && fe.scrollHeight - fe.scrollTop - fe.clientHeight < 60;
+
+      $("pill").className = "pill s-" + s.status;
+      $("pill").textContent = s.status === "healthy" ? "healthy" : s.status.replace("_", " ");
+      $("kb").hidden = !s.kill_switch;
+      $("kill").classList.toggle("on", s.kill_switch);
+      $("kill").textContent = s.kill_switch ? "Release kill switch" : "Stop / Kill switch";
+      $("steps").innerHTML = STEPS.map((t, i) => `<li class="st ${i < n ? "done" : i === n && act ? "now" : ""}">${t}</li>`).join("");
+      $("start").disabled = act || s.kill_switch;
+
+      if (s.status === "idle" && !s.report) return;
+
+      const top = fe ? fe.scrollTop : 0;
+      $("view").innerHTML =
+        doneBanner(s) +
+        scanCard(s) +
+        (s.error ? `<section class="bad"><h2>Error</h2><p class="empty" style="margin:0">${E(s.error)}</p></section>` : "") +
+        feed(s.feed) +
+        diag(s.pending?.diagnosis || s.diagnosis) +
+        gate(s.pending) +
+        human(s);
+
+      const nf = $("feed");
+      if (nf) nf.scrollTop = stick ? nf.scrollHeight : top;
+    }
+
+    async function tick() {
+      if (busy) return;
+      try {
+        render(await (await fetch("/api/state")).json());
+      } catch (e) {
+        $("pill").textContent = "server offline";
+        $("pill").className = "pill s-error";
+      }
+    }
+
+    $("start").onclick = () => {
+      startedInThisTab = true;
+      post("/api/incident", {dry_run: $("dry").checked}).then(tick);
+    };
+    $("kill").onclick = () => post("/api/kill", {active: !S.kill_switch}).then(tick);
+    $("watch").onchange = () => post("/api/watch", {on: $("watch").checked, dry_run: $("dry").checked});
+    $("view").onclick = async e => {
+      const c = e.target.dataset?.c;
+      if (!c || !S.pending) return;
+      busy = true;
+      e.target.parentElement.querySelectorAll("button").forEach(b => b.disabled = true);
+      await post("/api/approve", {choice: c, digest: S.pending.plan.approval_digest});
+      busy = false;
+      tick();
+    };
+
+    tick();
+    setInterval(tick, 1500);
+  </script>
+</body>
+</html>

@@ -1,0 +1,203 @@
+{
+  "incident_id": "inc-1792822836",
+  "status": "Escalated",
+  "alert": "Detector opened an incident. Symptoms: quote: container quote under pressure: cpu 0.82%, memory 94.17% of limit",
+  "timeline": {
+    "detected_at": "2026-10-24T06:20:36Z",
+    "completed_at": "2026-10-24T06:21:14Z",
+    "tool_calls_count": 5,
+    "rounds": 1
+  },
+  "diagnosis": {
+    "fault_class": "unknown",
+    "failing_component": "unknown",
+    "cause": "Investigation halted immediately because the kill switch is active.",
+    "confidence": "low",
+    "evidence": [],
+    "dropped_ungrounded_evidence": [],
+    "secondary_findings": [],
+    "suggested_remedy": "none/escalate",
+    "escalate_to_human": true,
+    "kill_switch_aborted": true
+  },
+  "action_plan": {
+    "allowed": false,
+    "escalate": true,
+    "incident_id": "inc-1792822836",
+    "reason": "Diagnosis confidence is low or escalation was requested by the agent."
+  },
+  "human_approval": null,
+  "execution": null,
+  "verification": null,
+  "rounds": [
+    {
+      "round": 1,
+      "alert": "Detector opened an incident. Symptoms: quote: container quote under pressure: cpu 0.82%, memory 94.17% of limit",
+      "diagnosis": {
+        "fault_class": "unknown",
+        "failing_component": "unknown",
+        "cause": "Investigation halted immediately because the kill switch is active.",
+        "confidence": "low",
+        "evidence": [],
+        "dropped_ungrounded_evidence": [],
+        "secondary_findings": [],
+        "suggested_remedy": "none/escalate",
+        "escalate_to_human": true,
+        "kill_switch_aborted": true
+      },
+      "action_plan": {
+        "allowed": false,
+        "escalate": true,
+        "incident_id": "inc-1792822836",
+        "reason": "Diagnosis confidence is low or escalation was requested by the agent."
+      },
+      "human_approval": null,
+      "execution": null,
+      "verification": null,
+      "observations": [
+        {
+          "id": "obs-1",
+          "timestamp": "2026-10-24T06:20:38Z",
+          "tool": "triage",
+          "args": {
+            "window_min": 5
+          },
+          "finding": "0 anomalies",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-1\", \"window_min\": 5, \"baseline_offsets_min\": [15, 45], \"anomalies\": [], \"service_rates\": {\"currency\": 1.0917, \"image-provider\": 3.2877, \"ad\": 0.3375, \"frontend-proxy\": 12.8925, \"telemetry-docs\": 0.2, \"recommendation\": 0.8417, \"frontend\": 12.8217, \"cart\": 1.1959, \"quote\": 0.1167, \"shipping\": 0.1417, \"payment\": 0.0208, \"product-catalog\": 4.9295, \"email\": 0.0083, \"checkout\": 0.0083}, \"containers\": {\"hot\": [{\"service\": \"accounting\", \"cpu_pct\": 0.31, \"mem_pct_of_limit\": 88.03}, {\"service",
+          "round": 1
+        },
+        {
+          "id": "obs-2",
+          "timestamp": "2026-10-24T06:20:39Z",
+          "tool": "metric_trend",
+          "args": {
+            "metric": "memory",
+            "minutes": 60,
+            "service": "quote"
+          },
+          "finding": "first 65.156 -> last 94.17 (x1.45, rising 0.45)",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-2\", \"query\": \"max by (container_name)(container_memory_percent_ratio{container_name=\\\"quote\\\"})\", \"window_min\": 60, \"series\": [{\"series\": {\"container_name\": \"quote\"}, \"first\": 65.156, \"last\": 94.17, \"min\": 55.84, \"max\": 94.17, \"change_ratio\": 1.45, \"monotonic_up_share\": 0.45}]}",
+          "round": 1
+        },
+        {
+          "id": "obs-3",
+          "timestamp": "2026-10-24T06:20:41Z",
+          "tool": "container_health",
+          "args": {},
+          "finding": "23 running, hot ['accounting cpu 0.31% mem 88.03%', 'ad cpu 1.02% mem 76.85%']",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-3\", \"total\": 23, \"running\": [\"accounting\", \"ad\", \"astronomy-db\", \"cart\", \"checkout\", \"currency\", \"email\", \"fraud-detection\", \"frontend\", \"frontend-proxy\", \"image-provider\", \"jaeger\", \"kafka\", \"load-generator\", \"opamp-server\", \"otel-collector\", \"payment\", \"product-catalog\", \"prometheus\", \"quote\", \"recommendation\", \"shipping\", \"valkey-cart\"], \"not_running\": [], \"restarts_or_oom\": [], \"hot\": [{\"service\": \"accounting\", \"cpu_pct\": 0.31, \"mem_pct_of_limit\": 88.03}, {\"service\": \"ad\", \"cpu_",
+          "round": 1
+        },
+        {
+          "id": "obs-4",
+          "timestamp": "2026-10-24T06:20:41Z",
+          "tool": "get_metrics",
+          "args": {
+            "metric": "error_rate",
+            "service": "quote",
+            "window": "5m"
+          },
+          "finding": "error_rate ok",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-4\", \"tool\": \"get_metrics\", \"metric\": \"error_rate\", \"window\": \"5m\", \"status\": \"ok\", \"rows\": [], \"queries\": [\"sum by (service_name, span_name) (rate(traces_span_metrics_calls_total{service_name!~\\\"flagd|flagd-ui\\\",span_name!~\\\".*(flagd|feature_flag|featureflag).*\\\",service_name=\\\"quote\\\"}[5m]))\", \"sum by (service_name, span_name) (rate(traces_span_metrics_calls_total{service_name!~\\\"flagd|flagd-ui\\\",span_name!~\\\".*(flagd|feature_flag|featureflag).*\\\",service_name=\\\"quote\\\",status_code",
+          "round": 1
+        },
+        {
+          "id": "obs-5",
+          "timestamp": "2026-10-24T06:21:12Z",
+          "tool": "get_metrics",
+          "args": {
+            "metric": "latency_p95",
+            "service": "quote",
+            "window": "5m"
+          },
+          "finding": "latency_p95 ok; top: {\"service\": \"quote\", \"operation\": \"POST /getquote\", \"p95_ms\": 80.0}",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-5\", \"tool\": \"get_metrics\", \"metric\": \"latency_p95\", \"window\": \"5m\", \"status\": \"ok\", \"rows\": [{\"service\": \"quote\", \"operation\": \"POST /getquote\", \"p95_ms\": 80.0}, {\"service\": \"quote\", \"operation\": \"{closure}\", \"p95_ms\": 42.0}, {\"service\": \"quote\", \"operation\": \"calculate-quote\", \"p95_ms\": 3.6}], \"queries\": [\"histogram_quantile(0.95, sum by (le, service_name, span_name) (rate(traces_span_metrics_duration_milliseconds_bucket{service_name!~\\\"flagd|flagd-ui\\\",span_name!~\\\".*(flagd|featur",
+          "round": 1
+        }
+      ]
+    }
+  ],
+  "prevention_recommendation": [
+    "Add targeted service-level alerts and runbook automation for this failure mode."
+  ],
+  "observations": [
+    {
+      "id": "obs-1",
+      "timestamp": "2026-10-24T06:20:38Z",
+      "tool": "triage",
+      "args": {
+        "window_min": 5
+      },
+      "finding": "0 anomalies",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-1\", \"window_min\": 5, \"baseline_offsets_min\": [15, 45], \"anomalies\": [], \"service_rates\": {\"currency\": 1.0917, \"image-provider\": 3.2877, \"ad\": 0.3375, \"frontend-proxy\": 12.8925, \"telemetry-docs\": 0.2, \"recommendation\": 0.8417, \"frontend\": 12.8217, \"cart\": 1.1959, \"quote\": 0.1167, \"shipping\": 0.1417, \"payment\": 0.0208, \"product-catalog\": 4.9295, \"email\": 0.0083, \"checkout\": 0.0083}, \"containers\": {\"hot\": [{\"service\": \"accounting\", \"cpu_pct\": 0.31, \"mem_pct_of_limit\": 88.03}, {\"service",
+      "round": 1
+    },
+    {
+      "id": "obs-2",
+      "timestamp": "2026-10-24T06:20:39Z",
+      "tool": "metric_trend",
+      "args": {
+        "metric": "memory",
+        "minutes": 60,
+        "service": "quote"
+      },
+      "finding": "first 65.156 -> last 94.17 (x1.45, rising 0.45)",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-2\", \"query\": \"max by (container_name)(container_memory_percent_ratio{container_name=\\\"quote\\\"})\", \"window_min\": 60, \"series\": [{\"series\": {\"container_name\": \"quote\"}, \"first\": 65.156, \"last\": 94.17, \"min\": 55.84, \"max\": 94.17, \"change_ratio\": 1.45, \"monotonic_up_share\": 0.45}]}",
+      "round": 1
+    },
+    {
+      "id": "obs-3",
+      "timestamp": "2026-10-24T06:20:41Z",
+      "tool": "container_health",
+      "args": {},
+      "finding": "23 running, hot ['accounting cpu 0.31% mem 88.03%', 'ad cpu 1.02% mem 76.85%']",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-3\", \"total\": 23, \"running\": [\"accounting\", \"ad\", \"astronomy-db\", \"cart\", \"checkout\", \"currency\", \"email\", \"fraud-detection\", \"frontend\", \"frontend-proxy\", \"image-provider\", \"jaeger\", \"kafka\", \"load-generator\", \"opamp-server\", \"otel-collector\", \"payment\", \"product-catalog\", \"prometheus\", \"quote\", \"recommendation\", \"shipping\", \"valkey-cart\"], \"not_running\": [], \"restarts_or_oom\": [], \"hot\": [{\"service\": \"accounting\", \"cpu_pct\": 0.31, \"mem_pct_of_limit\": 88.03}, {\"service\": \"ad\", \"cpu_",
+      "round": 1
+    },
+    {
+      "id": "obs-4",
+      "timestamp": "2026-10-24T06:20:41Z",
+      "tool": "get_metrics",
+      "args": {
+        "metric": "error_rate",
+        "service": "quote",
+        "window": "5m"
+      },
+      "finding": "error_rate ok",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-4\", \"tool\": \"get_metrics\", \"metric\": \"error_rate\", \"window\": \"5m\", \"status\": \"ok\", \"rows\": [], \"queries\": [\"sum by (service_name, span_name) (rate(traces_span_metrics_calls_total{service_name!~\\\"flagd|flagd-ui\\\",span_name!~\\\".*(flagd|feature_flag|featureflag).*\\\",service_name=\\\"quote\\\"}[5m]))\", \"sum by (service_name, span_name) (rate(traces_span_metrics_calls_total{service_name!~\\\"flagd|flagd-ui\\\",span_name!~\\\".*(flagd|feature_flag|featureflag).*\\\",service_name=\\\"quote\\\",status_code",
+      "round": 1
+    },
+    {
+      "id": "obs-5",
+      "timestamp": "2026-10-24T06:21:12Z",
+      "tool": "get_metrics",
+      "args": {
+        "metric": "latency_p95",
+        "service": "quote",
+        "window": "5m"
+      },
+      "finding": "latency_p95 ok; top: {\"service\": \"quote\", \"operation\": \"POST /getquote\", \"p95_ms\": 80.0}",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-5\", \"tool\": \"get_metrics\", \"metric\": \"latency_p95\", \"window\": \"5m\", \"status\": \"ok\", \"rows\": [{\"service\": \"quote\", \"operation\": \"POST /getquote\", \"p95_ms\": 80.0}, {\"service\": \"quote\", \"operation\": \"{closure}\", \"p95_ms\": 42.0}, {\"service\": \"quote\", \"operation\": \"calculate-quote\", \"p95_ms\": 3.6}], \"queries\": [\"histogram_quantile(0.95, sum by (le, service_name, span_name) (rate(traces_span_metrics_duration_milliseconds_bucket{service_name!~\\\"flagd|flagd-ui\\\",span_name!~\\\".*(flagd|featur",
+      "round": 1
+    }
+  ],
+  "llm_usage": [
+    {
+      "provider": "groq:openai/gpt-oss-120b",
+      "calls": 6,
+      "tokens": 13150,
+      "daily_quota_hit": false
+    }
+  ],
+  "remaining_symptoms": []
+}

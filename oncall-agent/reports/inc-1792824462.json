@@ -1,0 +1,429 @@
+{
+  "incident_id": "inc-1792824462",
+  "status": "Resolved",
+  "alert": "Detector opened an incident. Symptoms: shipping: p95 182ms (baseline 25ms)",
+  "timeline": {
+    "detected_at": "2026-10-24T06:47:42Z",
+    "completed_at": "2026-10-24T06:53:30Z",
+    "tool_calls_count": 8,
+    "rounds": 1
+  },
+  "diagnosis": {
+    "fault_class": "latency_regression",
+    "failing_component": "shipping",
+    "cause": "Shipping\u2019s p95 latency spiked to 182\u202fms from a 25\u202fms baseline while error rate remains zero and CPU usage is moderate, indicating a regression in the service\u2019s processing time.",
+    "confidence": "medium",
+    "evidence": [
+      "obs-1: p95 182ms (baseline 25ms)",
+      "obs-4: error_rate rows: [] (no errors)",
+      "obs-7: cpu value 0.6527 (moderate usage)",
+      "obs-2: shipping is in running list (no container crash)"
+    ],
+    "dropped_ungrounded_evidence": [
+      "obs-8: no recent deploys or restarts for shipping"
+    ],
+    "secondary_findings": [],
+    "suggested_remedy": "scale a service",
+    "escalate_to_human": false
+  },
+  "action_plan": {
+    "allowed": true,
+    "escalate": false,
+    "incident_id": "inc-1792824462",
+    "proposal_version": 1,
+    "round": 1,
+    "action_type": "toggle_feature_flag",
+    "target": "shipping",
+    "parameters": {
+      "flag_name": "intlShippingSlowdown",
+      "variant": "off",
+      "service": "shipping"
+    },
+    "reason": "Shipping\u2019s p95 latency spiked to 182\u202fms from a 25\u202fms baseline while error rate remains zero and CPU usage is moderate, indicating a regression in the service\u2019s processing time.",
+    "rollback": {
+      "reversible": true,
+      "description": "Restore 'intlShippingSlowdown' to its previous variant if verification fails."
+    },
+    "policy_note": "Runbook override: agent suggested scale_service, policy chose toggle_feature_flag for (shipping, latency_regression).",
+    "approval_digest": "b906792fdf7538fbf9df3edc71329741186d82584f41f0b2fb664f351901033f"
+  },
+  "human_approval": {
+    "approved": true,
+    "dry_run": false,
+    "decided_at": "2026-10-24T06:50:37Z",
+    "decided_epoch": 1792824637.4202814,
+    "approval_digest": "b906792fdf7538fbf9df3edc71329741186d82584f41f0b2fb664f351901033f",
+    "consumed": true,
+    "operator_input": "yes",
+    "approver": "ui-operator"
+  },
+  "execution": {
+    "executed": true,
+    "status": "success",
+    "action_type": "toggle_feature_flag",
+    "previous_variant": "off",
+    "detail": "Set intlShippingSlowdown -> off (was off)"
+  },
+  "verification": {
+    "verified": true,
+    "target_recovered": true,
+    "status": "Resolved",
+    "target_service": "shipping",
+    "watched_services": [
+      "checkout",
+      "frontend",
+      "shipping"
+    ],
+    "passing_samples": 2,
+    "required_samples": 2,
+    "checks": [
+      {
+        "sample": 1,
+        "timestamp": "2026-10-24T06:51:53Z",
+        "passed": true,
+        "target_ok": true,
+        "blind": [],
+        "remaining_anomalies": [],
+        "not_running": [],
+        "still_cpu_capped": [],
+        "stopped_dependencies": [],
+        "no_traffic_seen": false,
+        "other_anomalies": []
+      },
+      {
+        "sample": 2,
+        "timestamp": "2026-10-24T06:52:13Z",
+        "passed": true,
+        "target_ok": true,
+        "blind": [],
+        "remaining_anomalies": [],
+        "not_running": [],
+        "still_cpu_capped": [],
+        "stopped_dependencies": [],
+        "no_traffic_seen": false,
+        "other_anomalies": []
+      }
+    ]
+  },
+  "rounds": [
+    {
+      "round": 1,
+      "alert": "Detector opened an incident. Symptoms: shipping: p95 182ms (baseline 25ms)",
+      "diagnosis": {
+        "fault_class": "latency_regression",
+        "failing_component": "shipping",
+        "cause": "Shipping\u2019s p95 latency spiked to 182\u202fms from a 25\u202fms baseline while error rate remains zero and CPU usage is moderate, indicating a regression in the service\u2019s processing time.",
+        "confidence": "medium",
+        "evidence": [
+          "obs-1: p95 182ms (baseline 25ms)",
+          "obs-4: error_rate rows: [] (no errors)",
+          "obs-7: cpu value 0.6527 (moderate usage)",
+          "obs-2: shipping is in running list (no container crash)"
+        ],
+        "dropped_ungrounded_evidence": [
+          "obs-8: no recent deploys or restarts for shipping"
+        ],
+        "secondary_findings": [],
+        "suggested_remedy": "scale a service",
+        "escalate_to_human": false
+      },
+      "action_plan": {
+        "allowed": true,
+        "escalate": false,
+        "incident_id": "inc-1792824462",
+        "proposal_version": 1,
+        "round": 1,
+        "action_type": "toggle_feature_flag",
+        "target": "shipping",
+        "parameters": {
+          "flag_name": "intlShippingSlowdown",
+          "variant": "off",
+          "service": "shipping"
+        },
+        "reason": "Shipping\u2019s p95 latency spiked to 182\u202fms from a 25\u202fms baseline while error rate remains zero and CPU usage is moderate, indicating a regression in the service\u2019s processing time.",
+        "rollback": {
+          "reversible": true,
+          "description": "Restore 'intlShippingSlowdown' to its previous variant if verification fails."
+        },
+        "policy_note": "Runbook override: agent suggested scale_service, policy chose toggle_feature_flag for (shipping, latency_regression).",
+        "approval_digest": "b906792fdf7538fbf9df3edc71329741186d82584f41f0b2fb664f351901033f"
+      },
+      "human_approval": {
+        "approved": true,
+        "dry_run": false,
+        "decided_at": "2026-10-24T06:50:37Z",
+        "decided_epoch": 1792824637.4202814,
+        "approval_digest": "b906792fdf7538fbf9df3edc71329741186d82584f41f0b2fb664f351901033f",
+        "consumed": true,
+        "operator_input": "yes",
+        "approver": "ui-operator"
+      },
+      "execution": {
+        "executed": true,
+        "status": "success",
+        "action_type": "toggle_feature_flag",
+        "previous_variant": "off",
+        "detail": "Set intlShippingSlowdown -> off (was off)"
+      },
+      "verification": {
+        "verified": true,
+        "target_recovered": true,
+        "status": "Resolved",
+        "target_service": "shipping",
+        "watched_services": [
+          "checkout",
+          "frontend",
+          "shipping"
+        ],
+        "passing_samples": 2,
+        "required_samples": 2,
+        "checks": [
+          {
+            "sample": 1,
+            "timestamp": "2026-10-24T06:51:53Z",
+            "passed": true,
+            "target_ok": true,
+            "blind": [],
+            "remaining_anomalies": [],
+            "not_running": [],
+            "still_cpu_capped": [],
+            "stopped_dependencies": [],
+            "no_traffic_seen": false,
+            "other_anomalies": []
+          },
+          {
+            "sample": 2,
+            "timestamp": "2026-10-24T06:52:13Z",
+            "passed": true,
+            "target_ok": true,
+            "blind": [],
+            "remaining_anomalies": [],
+            "not_running": [],
+            "still_cpu_capped": [],
+            "stopped_dependencies": [],
+            "no_traffic_seen": false,
+            "other_anomalies": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "id": "obs-1",
+          "timestamp": "2026-10-24T06:47:44Z",
+          "tool": "triage",
+          "args": {
+            "window_min": 5
+          },
+          "finding": "1 anomalies: shipping p95 182ms (baseline 25ms)",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-1\", \"window_min\": 5, \"baseline_offsets_min\": [15, 45], \"anomalies\": [{\"type\": \"latency\", \"service\": \"shipping\", \"score\": 72.8, \"detail\": \"p95 182ms (baseline 25ms)\"}], \"service_rates\": {\"currency\": 1.0376, \"image-provider\": 3.6628, \"ad\": 0.3834, \"frontend-proxy\": 13.5343, \"telemetry-docs\": 0.2, \"recommendation\": 0.8667, \"frontend\": 13.1384, \"cart\": 1.2626, \"quote\": 0.1292, \"shipping\": 0.15, \"payment\": 0.0208, \"product-catalog\": 5.142, \"email\": 0.0208, \"checkout\": 0.0208}, \"container",
+          "round": 1
+        },
+        {
+          "id": "obs-2",
+          "timestamp": "2026-10-24T06:47:45Z",
+          "tool": "container_health",
+          "args": {},
+          "finding": "23 running, hot ['accounting cpu 0.3% mem 88.15%', 'ad cpu 0.98% mem 74.15%']",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-2\", \"total\": 23, \"running\": [\"accounting\", \"ad\", \"astronomy-db\", \"cart\", \"checkout\", \"currency\", \"email\", \"fraud-detection\", \"frontend\", \"frontend-proxy\", \"image-provider\", \"jaeger\", \"kafka\", \"load-generator\", \"opamp-server\", \"otel-collector\", \"payment\", \"product-catalog\", \"prometheus\", \"quote\", \"recommendation\", \"shipping\", \"valkey-cart\"], \"not_running\": [], \"restarts_or_oom\": [], \"hot\": [{\"service\": \"accounting\", \"cpu_pct\": 0.3, \"mem_pct_of_limit\": 88.15}, {\"service\": \"ad\", \"cpu_p",
+          "round": 1
+        },
+        {
+          "id": "obs-3",
+          "timestamp": "2026-10-24T06:47:46Z",
+          "tool": "metric_trend",
+          "args": {
+            "metric": "latency_p95",
+            "minutes": 30,
+            "service": "shipping"
+          },
+          "finding": "no series",
+          "empty": true,
+          "output_preview": "{\"obs\": \"obs-3\", \"query\": \"histogram_quantile(0.95, sum by (le)(rate(traces_span_metrics_duration_milliseconds_bucket{service_name=\\\"shipping\\\",span_kind=\\\"SPAN_KIND_SERVER\\\"}[1m])))\", \"window_min\": 30, \"series\": [], \"evidence_note\": \"this result is empty or failed: it is not evidence of anything\"}",
+          "round": 1
+        },
+        {
+          "id": "obs-4",
+          "timestamp": "2026-10-24T06:48:18Z",
+          "tool": "get_metrics",
+          "args": {
+            "metric": "error_rate",
+            "service": "shipping",
+            "window": "5m"
+          },
+          "finding": "error_rate ok",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-4\", \"tool\": \"get_metrics\", \"metric\": \"error_rate\", \"window\": \"5m\", \"status\": \"ok\", \"rows\": [], \"queries\": [\"sum by (service_name, span_name) (rate(traces_span_metrics_calls_total{service_name!~\\\"flagd|flagd-ui\\\",span_name!~\\\".*(flagd|feature_flag|featureflag).*\\\",service_name=\\\"shipping\\\"}[5m]))\", \"sum by (service_name, span_name) (rate(traces_span_metrics_calls_total{service_name!~\\\"flagd|flagd-ui\\\",span_name!~\\\".*(flagd|feature_flag|featureflag).*\\\",service_name=\\\"shipping\\\",statu",
+          "round": 1
+        },
+        {
+          "id": "obs-5",
+          "timestamp": "2026-10-24T06:48:19Z",
+          "tool": "edge_latency_gap",
+          "args": {
+            "minutes": 10
+          },
+          "finding": "widest gap: frontend-web -> frontend-proxy median 12.2ms",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-5\", \"window_min\": 10, \"edges\": [{\"caller\": \"frontend-web\", \"callee\": \"frontend-proxy\", \"samples\": 12, \"median_gap_ms\": 12.2, \"p95_gap_ms\": 22.4}, {\"caller\": \"load-generator\", \"callee\": \"frontend-proxy\", \"samples\": 3, \"median_gap_ms\": 3.6, \"p95_gap_ms\": 5.7}, {\"caller\": \"frontend\", \"callee\": \"product-catalog\", \"samples\": 19, \"median_gap_ms\": 1.7, \"p95_gap_ms\": 2.9}, {\"caller\": \"frontend\", \"callee\": \"currency\", \"samples\": 3, \"median_gap_ms\": 1.7, \"p95_gap_ms\": 3.0}, {\"caller\": \"fronte",
+          "round": 1
+        },
+        {
+          "id": "obs-6",
+          "timestamp": "2026-10-24T06:48:56Z",
+          "tool": "get_logs",
+          "args": {
+            "minutes": 10,
+            "service": "shipping"
+          },
+          "finding": "0 error lines in 185",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-6\", \"service\": \"shipping\", \"window_min\": 10, \"lines\": 185, \"error_lines\": 0, \"top_patterns\": []}",
+          "round": 1
+        },
+        {
+          "id": "obs-7",
+          "timestamp": "2026-10-24T06:48:57Z",
+          "tool": "get_metrics",
+          "args": {
+            "metric": "cpu",
+            "service": "shipping",
+            "window": "5m"
+          },
+          "finding": "cpu ok; top: {\"service\": \"shipping\", \"value\": 0.6527}",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-7\", \"tool\": \"get_metrics\", \"metric\": \"cpu\", \"window\": \"5m\", \"status\": \"ok\", \"rows\": [{\"service\": \"shipping\", \"value\": 0.6527}], \"queries\": [\"max by (container_name) (avg_over_time(container_cpu_utilization_ratio{container_name=\\\"shipping\\\"}[5m]))\"]}",
+          "round": 1
+        },
+        {
+          "id": "obs-8",
+          "timestamp": "2026-10-24T06:50:00Z",
+          "tool": "deploy_history",
+          "args": {
+            "minutes": 60
+          },
+          "finding": "7 recent container changes: cart started 10.5m ago, cart created 10.6m ago, checkout started 57.2m ago",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-8\", \"window_min\": 60, \"container_changes\": [{\"service\": \"cart\", \"event\": \"started\", \"minutes_ago\": 10.5, \"image\": \"demo:latest-cart\"}, {\"service\": \"cart\", \"event\": \"created\", \"minutes_ago\": 10.6, \"image\": \"demo:latest-cart\"}, {\"service\": \"checkout\", \"event\": \"started\", \"minutes_ago\": 57.2, \"image\": \"demo:latest-checkout\"}, {\"service\": \"product-catalog\", \"event\": \"started\", \"minutes_ago\": 57.2, \"image\": \"demo:latest-product-catalog\"}, {\"service\": \"checkout\", \"event\": \"created\", \"minu",
+          "round": 1
+        }
+      ]
+    }
+  ],
+  "prevention_recommendation": [
+    "Add per-operation latency SLOs with alerting and a timeout budget on every downstream call."
+  ],
+  "observations": [
+    {
+      "id": "obs-1",
+      "timestamp": "2026-10-24T06:47:44Z",
+      "tool": "triage",
+      "args": {
+        "window_min": 5
+      },
+      "finding": "1 anomalies: shipping p95 182ms (baseline 25ms)",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-1\", \"window_min\": 5, \"baseline_offsets_min\": [15, 45], \"anomalies\": [{\"type\": \"latency\", \"service\": \"shipping\", \"score\": 72.8, \"detail\": \"p95 182ms (baseline 25ms)\"}], \"service_rates\": {\"currency\": 1.0376, \"image-provider\": 3.6628, \"ad\": 0.3834, \"frontend-proxy\": 13.5343, \"telemetry-docs\": 0.2, \"recommendation\": 0.8667, \"frontend\": 13.1384, \"cart\": 1.2626, \"quote\": 0.1292, \"shipping\": 0.15, \"payment\": 0.0208, \"product-catalog\": 5.142, \"email\": 0.0208, \"checkout\": 0.0208}, \"container",
+      "round": 1
+    },
+    {
+      "id": "obs-2",
+      "timestamp": "2026-10-24T06:47:45Z",
+      "tool": "container_health",
+      "args": {},
+      "finding": "23 running, hot ['accounting cpu 0.3% mem 88.15%', 'ad cpu 0.98% mem 74.15%']",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-2\", \"total\": 23, \"running\": [\"accounting\", \"ad\", \"astronomy-db\", \"cart\", \"checkout\", \"currency\", \"email\", \"fraud-detection\", \"frontend\", \"frontend-proxy\", \"image-provider\", \"jaeger\", \"kafka\", \"load-generator\", \"opamp-server\", \"otel-collector\", \"payment\", \"product-catalog\", \"prometheus\", \"quote\", \"recommendation\", \"shipping\", \"valkey-cart\"], \"not_running\": [], \"restarts_or_oom\": [], \"hot\": [{\"service\": \"accounting\", \"cpu_pct\": 0.3, \"mem_pct_of_limit\": 88.15}, {\"service\": \"ad\", \"cpu_p",
+      "round": 1
+    },
+    {
+      "id": "obs-3",
+      "timestamp": "2026-10-24T06:47:46Z",
+      "tool": "metric_trend",
+      "args": {
+        "metric": "latency_p95",
+        "minutes": 30,
+        "service": "shipping"
+      },
+      "finding": "no series",
+      "empty": true,
+      "output_preview": "{\"obs\": \"obs-3\", \"query\": \"histogram_quantile(0.95, sum by (le)(rate(traces_span_metrics_duration_milliseconds_bucket{service_name=\\\"shipping\\\",span_kind=\\\"SPAN_KIND_SERVER\\\"}[1m])))\", \"window_min\": 30, \"series\": [], \"evidence_note\": \"this result is empty or failed: it is not evidence of anything\"}",
+      "round": 1
+    },
+    {
+      "id": "obs-4",
+      "timestamp": "2026-10-24T06:48:18Z",
+      "tool": "get_metrics",
+      "args": {
+        "metric": "error_rate",
+        "service": "shipping",
+        "window": "5m"
+      },
+      "finding": "error_rate ok",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-4\", \"tool\": \"get_metrics\", \"metric\": \"error_rate\", \"window\": \"5m\", \"status\": \"ok\", \"rows\": [], \"queries\": [\"sum by (service_name, span_name) (rate(traces_span_metrics_calls_total{service_name!~\\\"flagd|flagd-ui\\\",span_name!~\\\".*(flagd|feature_flag|featureflag).*\\\",service_name=\\\"shipping\\\"}[5m]))\", \"sum by (service_name, span_name) (rate(traces_span_metrics_calls_total{service_name!~\\\"flagd|flagd-ui\\\",span_name!~\\\".*(flagd|feature_flag|featureflag).*\\\",service_name=\\\"shipping\\\",statu",
+      "round": 1
+    },
+    {
+      "id": "obs-5",
+      "timestamp": "2026-10-24T06:48:19Z",
+      "tool": "edge_latency_gap",
+      "args": {
+        "minutes": 10
+      },
+      "finding": "widest gap: frontend-web -> frontend-proxy median 12.2ms",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-5\", \"window_min\": 10, \"edges\": [{\"caller\": \"frontend-web\", \"callee\": \"frontend-proxy\", \"samples\": 12, \"median_gap_ms\": 12.2, \"p95_gap_ms\": 22.4}, {\"caller\": \"load-generator\", \"callee\": \"frontend-proxy\", \"samples\": 3, \"median_gap_ms\": 3.6, \"p95_gap_ms\": 5.7}, {\"caller\": \"frontend\", \"callee\": \"product-catalog\", \"samples\": 19, \"median_gap_ms\": 1.7, \"p95_gap_ms\": 2.9}, {\"caller\": \"frontend\", \"callee\": \"currency\", \"samples\": 3, \"median_gap_ms\": 1.7, \"p95_gap_ms\": 3.0}, {\"caller\": \"fronte",
+      "round": 1
+    },
+    {
+      "id": "obs-6",
+      "timestamp": "2026-10-24T06:48:56Z",
+      "tool": "get_logs",
+      "args": {
+        "minutes": 10,
+        "service": "shipping"
+      },
+      "finding": "0 error lines in 185",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-6\", \"service\": \"shipping\", \"window_min\": 10, \"lines\": 185, \"error_lines\": 0, \"top_patterns\": []}",
+      "round": 1
+    },
+    {
+      "id": "obs-7",
+      "timestamp": "2026-10-24T06:48:57Z",
+      "tool": "get_metrics",
+      "args": {
+        "metric": "cpu",
+        "service": "shipping",
+        "window": "5m"
+      },
+      "finding": "cpu ok; top: {\"service\": \"shipping\", \"value\": 0.6527}",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-7\", \"tool\": \"get_metrics\", \"metric\": \"cpu\", \"window\": \"5m\", \"status\": \"ok\", \"rows\": [{\"service\": \"shipping\", \"value\": 0.6527}], \"queries\": [\"max by (container_name) (avg_over_time(container_cpu_utilization_ratio{container_name=\\\"shipping\\\"}[5m]))\"]}",
+      "round": 1
+    },
+    {
+      "id": "obs-8",
+      "timestamp": "2026-10-24T06:50:00Z",
+      "tool": "deploy_history",
+      "args": {
+        "minutes": 60
+      },
+      "finding": "7 recent container changes: cart started 10.5m ago, cart created 10.6m ago, checkout started 57.2m ago",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-8\", \"window_min\": 60, \"container_changes\": [{\"service\": \"cart\", \"event\": \"started\", \"minutes_ago\": 10.5, \"image\": \"demo:latest-cart\"}, {\"service\": \"cart\", \"event\": \"created\", \"minutes_ago\": 10.6, \"image\": \"demo:latest-cart\"}, {\"service\": \"checkout\", \"event\": \"started\", \"minutes_ago\": 57.2, \"image\": \"demo:latest-checkout\"}, {\"service\": \"product-catalog\", \"event\": \"started\", \"minutes_ago\": 57.2, \"image\": \"demo:latest-product-catalog\"}, {\"service\": \"checkout\", \"event\": \"created\", \"minu",
+      "round": 1
+    }
+  ],
+  "llm_usage": [
+    {
+      "provider": "groq:openai/gpt-oss-120b",
+      "calls": 10,
+      "tokens": 26011,
+      "daily_quota_hit": false
+    }
+  ],
+  "remaining_symptoms": []
+}

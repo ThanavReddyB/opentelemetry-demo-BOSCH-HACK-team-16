@@ -1,0 +1,345 @@
+{
+  "incident_id": "inc-1792822647",
+  "status": "Failed_Escalated",
+  "alert": "Detector opened an incident. Symptoms: cart: operation POST /oteldemo.CartService/EmptyCart error rate 100.0%",
+  "timeline": {
+    "detected_at": "2026-10-24T06:17:27Z",
+    "completed_at": "2026-10-24T06:20:21Z",
+    "tool_calls_count": 9,
+    "rounds": 1
+  },
+  "diagnosis": {
+    "fault_class": "app_error",
+    "failing_component": "cart",
+    "cause": "Cart service is returning FailedPrecondition errors when trying to access its Redis store, indicating an internal application error connecting to the cart storage.",
+    "confidence": "medium",
+    "evidence": [
+      "obs-1: operation POST /oteldemo.CartService/EmptyCart error rate 100.0%",
+      "obs-4: Error status code 'FailedPrecondition' with detail 'Can't access cart storage. System.ApplicationException: Wasn't able to connect to redis'"
+    ],
+    "dropped_ungrounded_evidence": [
+      "obs-6: cart CPU usage stable, no container crash"
+    ],
+    "secondary_findings": [],
+    "suggested_remedy": "restart a service",
+    "escalate_to_human": false
+  },
+  "action_plan": {
+    "allowed": true,
+    "escalate": false,
+    "incident_id": "inc-1792822647",
+    "proposal_version": 1,
+    "round": 1,
+    "action_type": "toggle_feature_flag",
+    "target": "cart",
+    "parameters": {
+      "flag_name": "cartFailure",
+      "variant": "off",
+      "service": "cart"
+    },
+    "reason": "Cart service is returning FailedPrecondition errors when trying to access its Redis store, indicating an internal application error connecting to the cart storage.",
+    "rollback": {
+      "reversible": true,
+      "description": "Restore 'cartFailure' to its previous variant if verification fails."
+    },
+    "policy_note": "Runbook override: agent suggested restart_service, policy chose toggle_feature_flag for (cart, app_error).",
+    "approval_digest": "58753b633a7581e09cf72153b9d0da7985a4e43089f69f5cdb67a24f9a14f512"
+  },
+  "human_approval": {
+    "approved": true,
+    "dry_run": false,
+    "decided_at": "2026-10-24T06:20:21Z",
+    "decided_epoch": 1792822821.0887504,
+    "approval_digest": "58753b633a7581e09cf72153b9d0da7985a4e43089f69f5cdb67a24f9a14f512",
+    "consumed": false,
+    "operator_input": "yes",
+    "approver": "ui-operator"
+  },
+  "execution": {
+    "executed": false,
+    "status": "circuit_breaker_open",
+    "detail": "3 actions already executed in the last hour; escalate."
+  },
+  "verification": null,
+  "rounds": [
+    {
+      "round": 1,
+      "alert": "Detector opened an incident. Symptoms: cart: operation POST /oteldemo.CartService/EmptyCart error rate 100.0%",
+      "diagnosis": {
+        "fault_class": "app_error",
+        "failing_component": "cart",
+        "cause": "Cart service is returning FailedPrecondition errors when trying to access its Redis store, indicating an internal application error connecting to the cart storage.",
+        "confidence": "medium",
+        "evidence": [
+          "obs-1: operation POST /oteldemo.CartService/EmptyCart error rate 100.0%",
+          "obs-4: Error status code 'FailedPrecondition' with detail 'Can't access cart storage. System.ApplicationException: Wasn't able to connect to redis'"
+        ],
+        "dropped_ungrounded_evidence": [
+          "obs-6: cart CPU usage stable, no container crash"
+        ],
+        "secondary_findings": [],
+        "suggested_remedy": "restart a service",
+        "escalate_to_human": false
+      },
+      "action_plan": {
+        "allowed": true,
+        "escalate": false,
+        "incident_id": "inc-1792822647",
+        "proposal_version": 1,
+        "round": 1,
+        "action_type": "toggle_feature_flag",
+        "target": "cart",
+        "parameters": {
+          "flag_name": "cartFailure",
+          "variant": "off",
+          "service": "cart"
+        },
+        "reason": "Cart service is returning FailedPrecondition errors when trying to access its Redis store, indicating an internal application error connecting to the cart storage.",
+        "rollback": {
+          "reversible": true,
+          "description": "Restore 'cartFailure' to its previous variant if verification fails."
+        },
+        "policy_note": "Runbook override: agent suggested restart_service, policy chose toggle_feature_flag for (cart, app_error).",
+        "approval_digest": "58753b633a7581e09cf72153b9d0da7985a4e43089f69f5cdb67a24f9a14f512"
+      },
+      "human_approval": {
+        "approved": true,
+        "dry_run": false,
+        "decided_at": "2026-10-24T06:20:21Z",
+        "decided_epoch": 1792822821.0887504,
+        "approval_digest": "58753b633a7581e09cf72153b9d0da7985a4e43089f69f5cdb67a24f9a14f512",
+        "consumed": false,
+        "operator_input": "yes",
+        "approver": "ui-operator"
+      },
+      "execution": {
+        "executed": false,
+        "status": "circuit_breaker_open",
+        "detail": "3 actions already executed in the last hour; escalate."
+      },
+      "verification": null,
+      "observations": [
+        {
+          "id": "obs-1",
+          "timestamp": "2026-10-24T06:17:29Z",
+          "tool": "triage",
+          "args": {
+            "window_min": 5
+          },
+          "finding": "1 anomalies: cart operation POST /oteldemo.CartService/EmptyCart error rate 100.0%",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-1\", \"window_min\": 5, \"baseline_offsets_min\": [15, 45], \"anomalies\": [{\"type\": \"operation_error_rate\", \"service\": \"cart\", \"operation\": \"POST /oteldemo.CartService/EmptyCart\", \"score\": 95, \"detail\": \"operation POST /oteldemo.CartService/EmptyCart error rate 100.0%\"}], \"service_rates\": {\"currency\": 1.1042, \"image-provider\": 3.2752, \"ad\": 0.3292, \"frontend-proxy\": 12.73, \"telemetry-docs\": 0.2, \"recommendation\": 0.8084, \"frontend\": 12.5883, \"cart\": 1.2459, \"quote\": 0.1292, \"shipping\": 0.",
+          "round": 1
+        },
+        {
+          "id": "obs-2",
+          "timestamp": "2026-10-24T06:17:30Z",
+          "tool": "container_health",
+          "args": {},
+          "finding": "23 running, hot ['accounting cpu 0.31% mem 87.65%', 'ad cpu 1.03% mem 76.9%']",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-2\", \"total\": 23, \"running\": [\"accounting\", \"ad\", \"astronomy-db\", \"cart\", \"checkout\", \"currency\", \"email\", \"fraud-detection\", \"frontend\", \"frontend-proxy\", \"image-provider\", \"jaeger\", \"kafka\", \"load-generator\", \"opamp-server\", \"otel-collector\", \"payment\", \"product-catalog\", \"prometheus\", \"quote\", \"recommendation\", \"shipping\", \"valkey-cart\"], \"not_running\": [], \"restarts_or_oom\": [], \"hot\": [{\"service\": \"accounting\", \"cpu_pct\": 0.31, \"mem_pct_of_limit\": 87.65}, {\"service\": \"ad\", \"cpu_",
+          "round": 1
+        },
+        {
+          "id": "obs-3",
+          "timestamp": "2026-10-24T06:17:30Z",
+          "tool": "error_hotspots",
+          "args": {
+            "minutes": 15,
+            "service": "cart"
+          },
+          "finding": "0/29 traces errored; no root errors",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-3\", \"service_queried\": \"cart\", \"window_min\": 15, \"traces_checked\": 29, \"errored_traces\": 0, \"root_error_hotspots\": []}",
+          "round": 1
+        },
+        {
+          "id": "obs-4",
+          "timestamp": "2026-10-24T06:18:04Z",
+          "tool": "get_logs",
+          "args": {
+            "service": "cart"
+          },
+          "finding": "10 error lines in 1580; top: 'fail: cart.cartstore.ValkeyCartStore[2076027740]'",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-4\", \"service\": \"cart\", \"window_min\": 10, \"lines\": 1580, \"error_lines\": 10, \"top_patterns\": [{\"count\": 5, \"example\": \"fail: cart.cartstore.ValkeyCartStore[2076027740]\"}, {\"count\": 5, \"example\": \"Error status code 'FailedPrecondition' with detail 'Can't access cart storage. System.ApplicationException: Wasn't able to connect to redis\"}]}",
+          "round": 1
+        },
+        {
+          "id": "obs-5",
+          "timestamp": "2026-10-24T06:18:05Z",
+          "tool": "edge_latency_gap",
+          "args": {
+            "minutes": 10
+          },
+          "finding": "widest gap: frontend-web -> frontend-proxy median 14.1ms",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-5\", \"window_min\": 10, \"edges\": [{\"caller\": \"frontend-web\", \"callee\": \"frontend-proxy\", \"samples\": 16, \"median_gap_ms\": 14.1, \"p95_gap_ms\": 27.2}, {\"caller\": \"frontend\", \"callee\": \"product-catalog\", \"samples\": 14, \"median_gap_ms\": 1.4, \"p95_gap_ms\": 3.0}, {\"caller\": \"recommendation\", \"callee\": \"product-catalog\", \"samples\": 3, \"median_gap_ms\": 1.3, \"p95_gap_ms\": 1.6}, {\"caller\": \"frontend\", \"callee\": \"cart\", \"samples\": 4, \"median_gap_ms\": 1.0, \"p95_gap_ms\": 55.6}, {\"caller\": \"frontend",
+          "round": 1
+        },
+        {
+          "id": "obs-6",
+          "timestamp": "2026-10-24T06:18:05Z",
+          "tool": "metric_trend",
+          "args": {
+            "metric": "cpu",
+            "minutes": 30,
+            "service": "cart"
+          },
+          "finding": "first 0.496 -> last 0.51 (x1.03, rising 0.8)",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-6\", \"query\": \"max by (container_name)(container_cpu_utilization_ratio{container_name=\\\"cart\\\"})\", \"window_min\": 30, \"series\": [{\"series\": {\"container_name\": \"cart\"}, \"first\": 0.496, \"last\": 0.51, \"min\": 0.491, \"max\": 0.51, \"change_ratio\": 1.03, \"monotonic_up_share\": 0.8}]}",
+          "round": 1
+        },
+        {
+          "id": "obs-7",
+          "timestamp": "2026-10-24T06:18:37Z",
+          "tool": "container_health",
+          "args": {},
+          "finding": "23 running, hot ['accounting cpu 0.31% mem 87.76%', 'ad cpu 1.03% mem 76.83%']",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-7\", \"total\": 23, \"running\": [\"accounting\", \"ad\", \"astronomy-db\", \"cart\", \"checkout\", \"currency\", \"email\", \"fraud-detection\", \"frontend\", \"frontend-proxy\", \"image-provider\", \"jaeger\", \"kafka\", \"load-generator\", \"opamp-server\", \"otel-collector\", \"payment\", \"product-catalog\", \"prometheus\", \"quote\", \"recommendation\", \"shipping\", \"valkey-cart\"], \"not_running\": [], \"restarts_or_oom\": [], \"hot\": [{\"service\": \"accounting\", \"cpu_pct\": 0.31, \"mem_pct_of_limit\": 87.76}, {\"service\": \"ad\", \"cpu_",
+          "round": 1
+        },
+        {
+          "id": "obs-8",
+          "timestamp": "2026-10-24T06:18:38Z",
+          "tool": "container_health",
+          "args": {},
+          "finding": "23 running, hot ['accounting cpu 0.31% mem 87.76%', 'ad cpu 1.03% mem 76.83%']",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-8\", \"total\": 23, \"running\": [\"accounting\", \"ad\", \"astronomy-db\", \"cart\", \"checkout\", \"currency\", \"email\", \"fraud-detection\", \"frontend\", \"frontend-proxy\", \"image-provider\", \"jaeger\", \"kafka\", \"load-generator\", \"opamp-server\", \"otel-collector\", \"payment\", \"product-catalog\", \"prometheus\", \"quote\", \"recommendation\", \"shipping\", \"valkey-cart\"], \"not_running\": [], \"restarts_or_oom\": [], \"hot\": [{\"service\": \"accounting\", \"cpu_pct\": 0.31, \"mem_pct_of_limit\": 87.76}, {\"service\": \"ad\", \"cpu_",
+          "round": 1
+        },
+        {
+          "id": "obs-9",
+          "timestamp": "2026-10-24T06:19:04Z",
+          "tool": "container_health",
+          "args": {},
+          "finding": "23 running, hot ['accounting cpu 0.31% mem 87.79%', 'ad cpu 1.03% mem 76.82%']",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-9\", \"total\": 23, \"running\": [\"accounting\", \"ad\", \"astronomy-db\", \"cart\", \"checkout\", \"currency\", \"email\", \"fraud-detection\", \"frontend\", \"frontend-proxy\", \"image-provider\", \"jaeger\", \"kafka\", \"load-generator\", \"opamp-server\", \"otel-collector\", \"payment\", \"product-catalog\", \"prometheus\", \"quote\", \"recommendation\", \"shipping\", \"valkey-cart\"], \"not_running\": [], \"restarts_or_oom\": [], \"hot\": [{\"service\": \"accounting\", \"cpu_pct\": 0.31, \"mem_pct_of_limit\": 87.79}, {\"service\": \"ad\", \"cpu_",
+          "round": 1
+        }
+      ]
+    }
+  ],
+  "prevention_recommendation": [
+    "Add canary checks and automatic rollback for faulty releases; alert on per-operation error rate."
+  ],
+  "observations": [
+    {
+      "id": "obs-1",
+      "timestamp": "2026-10-24T06:17:29Z",
+      "tool": "triage",
+      "args": {
+        "window_min": 5
+      },
+      "finding": "1 anomalies: cart operation POST /oteldemo.CartService/EmptyCart error rate 100.0%",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-1\", \"window_min\": 5, \"baseline_offsets_min\": [15, 45], \"anomalies\": [{\"type\": \"operation_error_rate\", \"service\": \"cart\", \"operation\": \"POST /oteldemo.CartService/EmptyCart\", \"score\": 95, \"detail\": \"operation POST /oteldemo.CartService/EmptyCart error rate 100.0%\"}], \"service_rates\": {\"currency\": 1.1042, \"image-provider\": 3.2752, \"ad\": 0.3292, \"frontend-proxy\": 12.73, \"telemetry-docs\": 0.2, \"recommendation\": 0.8084, \"frontend\": 12.5883, \"cart\": 1.2459, \"quote\": 0.1292, \"shipping\": 0.",
+      "round": 1
+    },
+    {
+      "id": "obs-2",
+      "timestamp": "2026-10-24T06:17:30Z",
+      "tool": "container_health",
+      "args": {},
+      "finding": "23 running, hot ['accounting cpu 0.31% mem 87.65%', 'ad cpu 1.03% mem 76.9%']",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-2\", \"total\": 23, \"running\": [\"accounting\", \"ad\", \"astronomy-db\", \"cart\", \"checkout\", \"currency\", \"email\", \"fraud-detection\", \"frontend\", \"frontend-proxy\", \"image-provider\", \"jaeger\", \"kafka\", \"load-generator\", \"opamp-server\", \"otel-collector\", \"payment\", \"product-catalog\", \"prometheus\", \"quote\", \"recommendation\", \"shipping\", \"valkey-cart\"], \"not_running\": [], \"restarts_or_oom\": [], \"hot\": [{\"service\": \"accounting\", \"cpu_pct\": 0.31, \"mem_pct_of_limit\": 87.65}, {\"service\": \"ad\", \"cpu_",
+      "round": 1
+    },
+    {
+      "id": "obs-3",
+      "timestamp": "2026-10-24T06:17:30Z",
+      "tool": "error_hotspots",
+      "args": {
+        "minutes": 15,
+        "service": "cart"
+      },
+      "finding": "0/29 traces errored; no root errors",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-3\", \"service_queried\": \"cart\", \"window_min\": 15, \"traces_checked\": 29, \"errored_traces\": 0, \"root_error_hotspots\": []}",
+      "round": 1
+    },
+    {
+      "id": "obs-4",
+      "timestamp": "2026-10-24T06:18:04Z",
+      "tool": "get_logs",
+      "args": {
+        "service": "cart"
+      },
+      "finding": "10 error lines in 1580; top: 'fail: cart.cartstore.ValkeyCartStore[2076027740]'",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-4\", \"service\": \"cart\", \"window_min\": 10, \"lines\": 1580, \"error_lines\": 10, \"top_patterns\": [{\"count\": 5, \"example\": \"fail: cart.cartstore.ValkeyCartStore[2076027740]\"}, {\"count\": 5, \"example\": \"Error status code 'FailedPrecondition' with detail 'Can't access cart storage. System.ApplicationException: Wasn't able to connect to redis\"}]}",
+      "round": 1
+    },
+    {
+      "id": "obs-5",
+      "timestamp": "2026-10-24T06:18:05Z",
+      "tool": "edge_latency_gap",
+      "args": {
+        "minutes": 10
+      },
+      "finding": "widest gap: frontend-web -> frontend-proxy median 14.1ms",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-5\", \"window_min\": 10, \"edges\": [{\"caller\": \"frontend-web\", \"callee\": \"frontend-proxy\", \"samples\": 16, \"median_gap_ms\": 14.1, \"p95_gap_ms\": 27.2}, {\"caller\": \"frontend\", \"callee\": \"product-catalog\", \"samples\": 14, \"median_gap_ms\": 1.4, \"p95_gap_ms\": 3.0}, {\"caller\": \"recommendation\", \"callee\": \"product-catalog\", \"samples\": 3, \"median_gap_ms\": 1.3, \"p95_gap_ms\": 1.6}, {\"caller\": \"frontend\", \"callee\": \"cart\", \"samples\": 4, \"median_gap_ms\": 1.0, \"p95_gap_ms\": 55.6}, {\"caller\": \"frontend",
+      "round": 1
+    },
+    {
+      "id": "obs-6",
+      "timestamp": "2026-10-24T06:18:05Z",
+      "tool": "metric_trend",
+      "args": {
+        "metric": "cpu",
+        "minutes": 30,
+        "service": "cart"
+      },
+      "finding": "first 0.496 -> last 0.51 (x1.03, rising 0.8)",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-6\", \"query\": \"max by (container_name)(container_cpu_utilization_ratio{container_name=\\\"cart\\\"})\", \"window_min\": 30, \"series\": [{\"series\": {\"container_name\": \"cart\"}, \"first\": 0.496, \"last\": 0.51, \"min\": 0.491, \"max\": 0.51, \"change_ratio\": 1.03, \"monotonic_up_share\": 0.8}]}",
+      "round": 1
+    },
+    {
+      "id": "obs-7",
+      "timestamp": "2026-10-24T06:18:37Z",
+      "tool": "container_health",
+      "args": {},
+      "finding": "23 running, hot ['accounting cpu 0.31% mem 87.76%', 'ad cpu 1.03% mem 76.83%']",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-7\", \"total\": 23, \"running\": [\"accounting\", \"ad\", \"astronomy-db\", \"cart\", \"checkout\", \"currency\", \"email\", \"fraud-detection\", \"frontend\", \"frontend-proxy\", \"image-provider\", \"jaeger\", \"kafka\", \"load-generator\", \"opamp-server\", \"otel-collector\", \"payment\", \"product-catalog\", \"prometheus\", \"quote\", \"recommendation\", \"shipping\", \"valkey-cart\"], \"not_running\": [], \"restarts_or_oom\": [], \"hot\": [{\"service\": \"accounting\", \"cpu_pct\": 0.31, \"mem_pct_of_limit\": 87.76}, {\"service\": \"ad\", \"cpu_",
+      "round": 1
+    },
+    {
+      "id": "obs-8",
+      "timestamp": "2026-10-24T06:18:38Z",
+      "tool": "container_health",
+      "args": {},
+      "finding": "23 running, hot ['accounting cpu 0.31% mem 87.76%', 'ad cpu 1.03% mem 76.83%']",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-8\", \"total\": 23, \"running\": [\"accounting\", \"ad\", \"astronomy-db\", \"cart\", \"checkout\", \"currency\", \"email\", \"fraud-detection\", \"frontend\", \"frontend-proxy\", \"image-provider\", \"jaeger\", \"kafka\", \"load-generator\", \"opamp-server\", \"otel-collector\", \"payment\", \"product-catalog\", \"prometheus\", \"quote\", \"recommendation\", \"shipping\", \"valkey-cart\"], \"not_running\": [], \"restarts_or_oom\": [], \"hot\": [{\"service\": \"accounting\", \"cpu_pct\": 0.31, \"mem_pct_of_limit\": 87.76}, {\"service\": \"ad\", \"cpu_",
+      "round": 1
+    },
+    {
+      "id": "obs-9",
+      "timestamp": "2026-10-24T06:19:04Z",
+      "tool": "container_health",
+      "args": {},
+      "finding": "23 running, hot ['accounting cpu 0.31% mem 87.79%', 'ad cpu 1.03% mem 76.82%']",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-9\", \"total\": 23, \"running\": [\"accounting\", \"ad\", \"astronomy-db\", \"cart\", \"checkout\", \"currency\", \"email\", \"fraud-detection\", \"frontend\", \"frontend-proxy\", \"image-provider\", \"jaeger\", \"kafka\", \"load-generator\", \"opamp-server\", \"otel-collector\", \"payment\", \"product-catalog\", \"prometheus\", \"quote\", \"recommendation\", \"shipping\", \"valkey-cart\"], \"not_running\": [], \"restarts_or_oom\": [], \"hot\": [{\"service\": \"accounting\", \"cpu_pct\": 0.31, \"mem_pct_of_limit\": 87.79}, {\"service\": \"ad\", \"cpu_",
+      "round": 1
+    }
+  ],
+  "llm_usage": [
+    {
+      "provider": "groq:openai/gpt-oss-120b",
+      "calls": 10,
+      "tokens": 25830,
+      "daily_quota_hit": false
+    }
+  ],
+  "remaining_symptoms": []
+}

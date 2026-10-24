@@ -1,0 +1,303 @@
+{
+  "incident_id": "inc-1792821881",
+  "status": "Resolved",
+  "alert": "Detector opened an incident. Symptoms: image-provider: request rate 3.26/s (baseline 0.53/s); product-catalog: request rate 4.50/s (baseline 0.76/s); currency: request rate 0.96/s (baseline 0.24/s)",
+  "timeline": {
+    "detected_at": "2026-10-24T06:04:41Z",
+    "completed_at": "2026-10-24T06:09:09Z",
+    "tool_calls_count": 3,
+    "rounds": 1
+  },
+  "diagnosis": {
+    "fault_class": "traffic_flood",
+    "failing_component": "frontend-proxy",
+    "cause": "A sudden surge in request rates across multiple services (image\u2011provider, product\u2011catalog, currency, recommendation, frontend\u2011proxy, cart) is overwhelming the system, consistent with a traffic flood.",
+    "confidence": "medium",
+    "evidence": [
+      "obs-1: request rate 3.26/s (baseline 0.53/s) for image-provider",
+      "obs-1: request rate 4.50/s (baseline 0.76/s) for product-catalog",
+      "obs-1: request rate 0.96/s (baseline 0.24/s) for currency",
+      "obs-1: request rate 0.73/s (baseline 0.21/s) for recommendation",
+      "obs-1: request rate 12.05/s (baseline 3.65/s) for frontend-proxy",
+      "obs-1: request rate 1.30/s (baseline 0.40/s) for cart",
+      "obs-3: recent_agent_actions include a prior throttle_load_generator action"
+    ],
+    "dropped_ungrounded_evidence": [
+      "obs-2: errored_traces 0 for frontend-proxy (no application errors)"
+    ],
+    "secondary_findings": [],
+    "suggested_remedy": "throttle a load generator",
+    "escalate_to_human": false
+  },
+  "action_plan": {
+    "allowed": true,
+    "escalate": false,
+    "incident_id": "inc-1792821881",
+    "proposal_version": 1,
+    "round": 1,
+    "action_type": "throttle_load_generator",
+    "target": "frontend-proxy",
+    "parameters": {
+      "user_count": 5,
+      "spawn_rate": 1
+    },
+    "reason": "A sudden surge in request rates across multiple services (image\u2011provider, product\u2011catalog, currency, recommendation, frontend\u2011proxy, cart) is overwhelming the system, consistent with a traffic flood.",
+    "rollback": {
+      "reversible": true,
+      "description": "Restore the previous Locust user count."
+    },
+    "policy_note": null,
+    "approval_digest": "a5214e61512f4b82df37e9b63de9d0ce6a9b3f8afc694ab3d72d1ea169e1a0af"
+  },
+  "human_approval": {
+    "approved": true,
+    "dry_run": false,
+    "decided_at": "2026-10-24T06:06:16Z",
+    "decided_epoch": 1792821976.5009952,
+    "approval_digest": "a5214e61512f4b82df37e9b63de9d0ce6a9b3f8afc694ab3d72d1ea169e1a0af",
+    "consumed": true,
+    "operator_input": "yes",
+    "approver": "ui-operator"
+  },
+  "execution": {
+    "executed": true,
+    "status": "success",
+    "action_type": "throttle_load_generator",
+    "previous_user_count": 5,
+    "detail": "Throttled load generator to 5 users (was 5)"
+  },
+  "verification": {
+    "verified": true,
+    "target_recovered": true,
+    "status": "Resolved",
+    "target_service": "frontend-proxy",
+    "watched_services": [
+      "frontend-proxy",
+      "load-generator"
+    ],
+    "passing_samples": 2,
+    "required_samples": 2,
+    "checks": [
+      {
+        "sample": 1,
+        "timestamp": "2026-10-24T06:07:32Z",
+        "passed": true,
+        "target_ok": true,
+        "blind": [],
+        "remaining_anomalies": [],
+        "not_running": [],
+        "still_cpu_capped": [],
+        "stopped_dependencies": [],
+        "no_traffic_seen": false,
+        "other_anomalies": []
+      },
+      {
+        "sample": 2,
+        "timestamp": "2026-10-24T06:07:52Z",
+        "passed": true,
+        "target_ok": true,
+        "blind": [],
+        "remaining_anomalies": [],
+        "not_running": [],
+        "still_cpu_capped": [],
+        "stopped_dependencies": [],
+        "no_traffic_seen": false,
+        "other_anomalies": []
+      }
+    ]
+  },
+  "rounds": [
+    {
+      "round": 1,
+      "alert": "Detector opened an incident. Symptoms: image-provider: request rate 3.26/s (baseline 0.53/s); product-catalog: request rate 4.50/s (baseline 0.76/s); currency: request rate 0.96/s (baseline 0.24/s)",
+      "diagnosis": {
+        "fault_class": "traffic_flood",
+        "failing_component": "frontend-proxy",
+        "cause": "A sudden surge in request rates across multiple services (image\u2011provider, product\u2011catalog, currency, recommendation, frontend\u2011proxy, cart) is overwhelming the system, consistent with a traffic flood.",
+        "confidence": "medium",
+        "evidence": [
+          "obs-1: request rate 3.26/s (baseline 0.53/s) for image-provider",
+          "obs-1: request rate 4.50/s (baseline 0.76/s) for product-catalog",
+          "obs-1: request rate 0.96/s (baseline 0.24/s) for currency",
+          "obs-1: request rate 0.73/s (baseline 0.21/s) for recommendation",
+          "obs-1: request rate 12.05/s (baseline 3.65/s) for frontend-proxy",
+          "obs-1: request rate 1.30/s (baseline 0.40/s) for cart",
+          "obs-3: recent_agent_actions include a prior throttle_load_generator action"
+        ],
+        "dropped_ungrounded_evidence": [
+          "obs-2: errored_traces 0 for frontend-proxy (no application errors)"
+        ],
+        "secondary_findings": [],
+        "suggested_remedy": "throttle a load generator",
+        "escalate_to_human": false
+      },
+      "action_plan": {
+        "allowed": true,
+        "escalate": false,
+        "incident_id": "inc-1792821881",
+        "proposal_version": 1,
+        "round": 1,
+        "action_type": "throttle_load_generator",
+        "target": "frontend-proxy",
+        "parameters": {
+          "user_count": 5,
+          "spawn_rate": 1
+        },
+        "reason": "A sudden surge in request rates across multiple services (image\u2011provider, product\u2011catalog, currency, recommendation, frontend\u2011proxy, cart) is overwhelming the system, consistent with a traffic flood.",
+        "rollback": {
+          "reversible": true,
+          "description": "Restore the previous Locust user count."
+        },
+        "policy_note": null,
+        "approval_digest": "a5214e61512f4b82df37e9b63de9d0ce6a9b3f8afc694ab3d72d1ea169e1a0af"
+      },
+      "human_approval": {
+        "approved": true,
+        "dry_run": false,
+        "decided_at": "2026-10-24T06:06:16Z",
+        "decided_epoch": 1792821976.5009952,
+        "approval_digest": "a5214e61512f4b82df37e9b63de9d0ce6a9b3f8afc694ab3d72d1ea169e1a0af",
+        "consumed": true,
+        "operator_input": "yes",
+        "approver": "ui-operator"
+      },
+      "execution": {
+        "executed": true,
+        "status": "success",
+        "action_type": "throttle_load_generator",
+        "previous_user_count": 5,
+        "detail": "Throttled load generator to 5 users (was 5)"
+      },
+      "verification": {
+        "verified": true,
+        "target_recovered": true,
+        "status": "Resolved",
+        "target_service": "frontend-proxy",
+        "watched_services": [
+          "frontend-proxy",
+          "load-generator"
+        ],
+        "passing_samples": 2,
+        "required_samples": 2,
+        "checks": [
+          {
+            "sample": 1,
+            "timestamp": "2026-10-24T06:07:32Z",
+            "passed": true,
+            "target_ok": true,
+            "blind": [],
+            "remaining_anomalies": [],
+            "not_running": [],
+            "still_cpu_capped": [],
+            "stopped_dependencies": [],
+            "no_traffic_seen": false,
+            "other_anomalies": []
+          },
+          {
+            "sample": 2,
+            "timestamp": "2026-10-24T06:07:52Z",
+            "passed": true,
+            "target_ok": true,
+            "blind": [],
+            "remaining_anomalies": [],
+            "not_running": [],
+            "still_cpu_capped": [],
+            "stopped_dependencies": [],
+            "no_traffic_seen": false,
+            "other_anomalies": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "id": "obs-1",
+          "timestamp": "2026-10-24T06:04:43Z",
+          "tool": "triage",
+          "args": {
+            "window_min": 5
+          },
+          "finding": "6 anomalies: image-provider request rate 3.26/s (baseline 0.53/s); product-catalog request rate 4.50/s (baseline 0.76/s)",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-1\", \"window_min\": 5, \"baseline_offsets_min\": [15, 45], \"anomalies\": [{\"type\": \"traffic_surge\", \"service\": \"image-provider\", \"score\": 61.7, \"detail\": \"request rate 3.26/s (baseline 0.53/s)\"}, {\"type\": \"traffic_surge\", \"service\": \"product-catalog\", \"score\": 59.3, \"detail\": \"request rate 4.50/s (baseline 0.76/s)\"}, {\"type\": \"traffic_surge\", \"service\": \"currency\", \"score\": 40.5, \"detail\": \"request rate 0.96/s (baseline 0.24/s)\"}, {\"type\": \"traffic_surge\", \"service\": \"recommendation\", \"s",
+          "round": 1
+        },
+        {
+          "id": "obs-2",
+          "timestamp": "2026-10-24T06:05:16Z",
+          "tool": "error_hotspots",
+          "args": {
+            "minutes": 15,
+            "service": "frontend-proxy"
+          },
+          "finding": "0/30 traces errored; no root errors",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-2\", \"service_queried\": \"frontend-proxy\", \"window_min\": 15, \"traces_checked\": 30, \"errored_traces\": 0, \"root_error_hotspots\": []}",
+          "round": 1
+        },
+        {
+          "id": "obs-3",
+          "timestamp": "2026-10-24T06:05:17Z",
+          "tool": "deploy_history",
+          "args": {
+            "minutes": 60
+          },
+          "finding": "5 recent container changes: checkout started 12.5m ago, product-catalog started 12.5m ago, checkout created 12.6m ago",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-3\", \"window_min\": 60, \"container_changes\": [{\"service\": \"checkout\", \"event\": \"started\", \"minutes_ago\": 12.5, \"image\": \"demo:latest-checkout\"}, {\"service\": \"product-catalog\", \"event\": \"started\", \"minutes_ago\": 12.5, \"image\": \"demo:latest-product-catalog\"}, {\"service\": \"checkout\", \"event\": \"created\", \"minutes_ago\": 12.6, \"image\": \"demo:latest-checkout\"}, {\"service\": \"product-catalog\", \"event\": \"created\", \"minutes_ago\": 12.6, \"image\": \"demo:latest-product-catalog\"}, {\"service\": \"recomm",
+          "round": 1
+        }
+      ]
+    }
+  ],
+  "prevention_recommendation": [
+    "Add rate limiting at the edge proxy to shed excess load gracefully."
+  ],
+  "observations": [
+    {
+      "id": "obs-1",
+      "timestamp": "2026-10-24T06:04:43Z",
+      "tool": "triage",
+      "args": {
+        "window_min": 5
+      },
+      "finding": "6 anomalies: image-provider request rate 3.26/s (baseline 0.53/s); product-catalog request rate 4.50/s (baseline 0.76/s)",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-1\", \"window_min\": 5, \"baseline_offsets_min\": [15, 45], \"anomalies\": [{\"type\": \"traffic_surge\", \"service\": \"image-provider\", \"score\": 61.7, \"detail\": \"request rate 3.26/s (baseline 0.53/s)\"}, {\"type\": \"traffic_surge\", \"service\": \"product-catalog\", \"score\": 59.3, \"detail\": \"request rate 4.50/s (baseline 0.76/s)\"}, {\"type\": \"traffic_surge\", \"service\": \"currency\", \"score\": 40.5, \"detail\": \"request rate 0.96/s (baseline 0.24/s)\"}, {\"type\": \"traffic_surge\", \"service\": \"recommendation\", \"s",
+      "round": 1
+    },
+    {
+      "id": "obs-2",
+      "timestamp": "2026-10-24T06:05:16Z",
+      "tool": "error_hotspots",
+      "args": {
+        "minutes": 15,
+        "service": "frontend-proxy"
+      },
+      "finding": "0/30 traces errored; no root errors",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-2\", \"service_queried\": \"frontend-proxy\", \"window_min\": 15, \"traces_checked\": 30, \"errored_traces\": 0, \"root_error_hotspots\": []}",
+      "round": 1
+    },
+    {
+      "id": "obs-3",
+      "timestamp": "2026-10-24T06:05:17Z",
+      "tool": "deploy_history",
+      "args": {
+        "minutes": 60
+      },
+      "finding": "5 recent container changes: checkout started 12.5m ago, product-catalog started 12.5m ago, checkout created 12.6m ago",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-3\", \"window_min\": 60, \"container_changes\": [{\"service\": \"checkout\", \"event\": \"started\", \"minutes_ago\": 12.5, \"image\": \"demo:latest-checkout\"}, {\"service\": \"product-catalog\", \"event\": \"started\", \"minutes_ago\": 12.5, \"image\": \"demo:latest-product-catalog\"}, {\"service\": \"checkout\", \"event\": \"created\", \"minutes_ago\": 12.6, \"image\": \"demo:latest-checkout\"}, {\"service\": \"product-catalog\", \"event\": \"created\", \"minutes_ago\": 12.6, \"image\": \"demo:latest-product-catalog\"}, {\"service\": \"recomm",
+      "round": 1
+    }
+  ],
+  "llm_usage": [
+    {
+      "provider": "groq:openai/gpt-oss-120b",
+      "calls": 5,
+      "tokens": 11761,
+      "daily_quota_hit": false
+    }
+  ],
+  "remaining_symptoms": []
+}

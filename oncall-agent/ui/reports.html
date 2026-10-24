@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Incident Zero: Reports Dashboard</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header>
+    <h1>Incident Zero · Reports Dashboard</h1>
+    <button onclick="loadDashboard()">Refresh</button>
+    <a class="nav-link" href="/">&larr; Run Agent Console</a>
+  </header>
+
+  <div class="stats-bar" id="stats-bar">
+    <div class="stat-box"><span class="num" id="st-total">0</span><span class="lbl">Total Incidents</span></div>
+    <div class="stat-box"><span class="num conf-high" id="st-resolved">0</span><span class="lbl">Resolved</span></div>
+    <div class="stat-box"><span class="num conf-medium" id="st-simulated">0</span><span class="lbl">Simulated (Dry-Run)</span></div>
+    <div class="stat-box"><span class="num conf-low" id="st-escalated">0</span><span class="lbl">Escalated / Partial</span></div>
+  </div>
+
+  <main class="reports-layout">
+    <aside>
+      <h2 style="margin-bottom:10px">All Reports</h2>
+      <div class="history-list" id="report-list">
+        <p class="muted">Loading reports...</p>
+      </div>
+    </aside>
+
+    <div id="report-detail">
+      <section>
+        <h2>Select a Report</h2>
+        <p class="muted" style="margin:0">Choose an incident report from the left to view its summary, diagnosis, and remediation details.</p>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    const $ = id => document.getElementById(id);
+    const E = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+    let reports = [];
+    let selectedId = new URLSearchParams(window.location.search).get("id");
+
+    function statusClass(st) {
+      if (st === "Resolved") return "good";
+      if (/Simulated|Rejected/.test(st || "")) return "mid";
+      return "bad";
+    }
+
+    function pillClass(st) {
+      if (st === "Resolved") return "s-done";
+      if (/Simulated/.test(st || "")) return "s-awaiting_approval";
+      return "s-error";
+    }
+
+    function renderList() {
+      const box = $("report-list");
+      if (!reports.length) {
+        box.innerHTML = `<p class="muted">No reports found in oncall-agent/reports/ yet.</p>`;
+        return;
+      }
+      box.innerHTML = reports.map((r, i) => {
+        const d = r.diagnosis || {};
+        const t = (r.timeline?.detected_at || "").replace("T", " ").replace("Z", " UTC");
+        const active = r.incident_id === selectedId ? "active" : "";
+        return `
+          <div class="report-card-item ${active}" onclick="selectReport('${E(r.incident_id)}')">
+            <div class="report-card-top">
+              <code>${E(r.incident_id)}</code>
+              ${i === 0 ? `<span class="tag-latest">LATEST</span>` : ""}
+              <span class="pill ${pillClass(r.status)}">${E((r.status || "Diagnosed").replace(/_/g, " "))}</span>
+            </div>
+            <div><strong>${E(d.failing_component || "unknown")}</strong> · <span class="muted">${E(d.fault_class || "unknown")}</span></div>
+            <div class="muted" style="font-size:12px;margin-top:2px">${E(t)}</div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function renderDetail(r) {
+      if (!r) return;
+      const t = r.timeline || {};
+      const d = r.diagnosis || {};
+      const st = r.status || "Diagnosed";
+      const cls = statusClass(st);
+      const isLatest = reports.length && reports[0].incident_id === r.incident_id;
+
+      const roundsHtml = (r.rounds || []).map((x, i) => {
+        const rd = x.diagnosis || {};
+        const p = x.action_plan || {};
+        const v = x.verification || {};
+        const e = x.execution || {};
+        const obs = x.observations || [];
+        const conf = rd.confidence || "low";
+
+        return `
+          <section>
+            <h2>Round ${i + 1}: ${E(rd.failing_component)} (${E(rd.fault_class)})</h2>
+            <div class="kv">
+              <b>Confidence</b><span class="conf-${E(conf)}"><strong>${E(conf)}</strong></span>
+              <b>Root cause</b><span>${E(rd.cause)}</span>
+              <b>Action</b><span>${p.allowed ? `<code>${E(p.action_type)}</code> on <strong>${E(p.target)}</strong> — ${E(e.detail || "not executed")}` : `Escalated to human: ${E(p.reason)}`}</span>
+              <b>Verification</b><span>${E((v.status || "not run").replace(/_/g, " "))}${v.required_samples ? ` (${v.passing_samples}/${v.required_samples} clean scans)` : ""}</span>
+            </div>
+
+            <h3>Verified Evidence</h3>
+            <ul>
+              ${(rd.evidence || []).map(ev => `<li>${E(ev)}</li>`).join("") || `<li class="muted">None verified</li>`}
+            </ul>
+
+            ${(rd.secondary_findings || []).length ? `
+              <h3>Also Seen</h3>
+              <ul>${rd.secondary_findings.map(sf => `<li>${E(sf)}</li>`).join("")}</ul>
+            ` : ""}
+
+            ${obs.length ? `
+              <details>
+                <summary>View ${obs.length} tool observations</summary>
+                <div style="margin-top:8px">
+                  ${obs.map(o => `
+                    <div class="row">
+                      <span class="id">${E(o.id)}</span>
+                      <span><strong>${E(o.tool)}</strong> <code>${E(JSON.stringify(o.args || {}))}</code><br><span class="muted">${E(o.finding || "")}</span></span>
+                    </div>
+                  `).join("")}
+                </div>
+              </details>
+            ` : ""}
+          </section>
+        `;
+      }).join("");
+
+      $("report-detail").innerHTML = `
+        <section class="${cls}">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:8px">
+            <h2 style="margin:0">${isLatest ? "Latest Report: " : "Report: "}<code>${E(r.incident_id)}</code></h2>
+            <span class="pill ${pillClass(st)}">${E(st.replace(/_/g, " "))}</span>
+          </div>
+          <div class="kv">
+            <b>Trigger Alert</b><span>${E(r.alert || "Manual scan")}</span>
+            <b>Primary Fault</b><span><strong>${E(d.failing_component || "unknown")}</strong> (${E(d.fault_class || "unknown")})</span>
+            <b>Summary</b><span>${E(d.cause || "")}</span>
+            <b>Detected</b><span>${E((t.detected_at || "").replace("T", " ").replace("Z", " UTC"))}</span>
+            <b>Completed</b><span>${E((t.completed_at || "").replace("T", " ").replace("Z", " UTC"))}</span>
+            <b>Fix rounds</b><span>${E(t.rounds || 1)} (${E(t.tool_calls_count || 0)} tool calls)</span>
+            ${(r.remaining_symptoms || []).length ? `<b>Still open</b><span class="empty">${r.remaining_symptoms.map(E).join("; ")}</span>` : ""}
+          </div>
+        </section>
+
+        ${roundsHtml}
+
+        ${(r.prevention_recommendation || []).length ? `
+          <section>
+            <h2>How to Prevent a Repeat</h2>
+            <ul>${r.prevention_recommendation.map(x => `<li>${E(x)}</li>`).join("")}</ul>
+          </section>
+        ` : ""}
+      `;
+    }
+
+    function selectReport(id) {
+      selectedId = id;
+      const found = reports.find(r => r.incident_id === id) || reports[0];
+      renderList();
+      renderDetail(found);
+    }
+
+    async function loadDashboard() {
+      const data = await (await fetch("/api/reports")).json();
+      const c = data.counts || {};
+      $("st-total").textContent = c.total || 0;
+      $("st-resolved").textContent = c.resolved || 0;
+      $("st-simulated").textContent = c.simulated || 0;
+      $("st-escalated").textContent = c.escalated || 0;
+
+      reports = data.reports || [];
+      if (!selectedId || !reports.some(r => r.incident_id === selectedId)) {
+        selectedId = reports[0]?.incident_id || null;
+      }
+      renderList();
+      if (selectedId) {
+        selectReport(selectedId);
+      }
+    }
+
+    loadDashboard();
+  </script>
+</body>
+</html>

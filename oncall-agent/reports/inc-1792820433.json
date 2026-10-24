@@ -1,0 +1,567 @@
+{
+  "incident_id": "inc-1792820433",
+  "status": "Partially_Resolved_Escalated",
+  "alert": "Detector opened an incident. Symptoms: product-catalog: container product-catalog restarted 1x (OOM killed: False); currency: request rate 0.68/s (baseline 0.11/s); image-provider: request rate 2.50/s (baseline 0.45/s); recommendation: request rate 0.55/s (baseline 0.11/s); kafka: container kafka under pressure: cpu 3.03%, memory 95.74% of limit",
+  "timeline": {
+    "detected_at": "2026-10-24T05:40:33Z",
+    "completed_at": "2026-10-24T05:49:18Z",
+    "tool_calls_count": 12,
+    "rounds": 2
+  },
+  "diagnosis": {
+    "fault_class": "traffic_flood",
+    "failing_component": "frontend",
+    "cause": "A sudden increase in request rates to multiple services (currency, image-provider, recommendation) indicates a traffic surge, likely from the load generator.",
+    "confidence": "medium",
+    "evidence": [
+      "obs-1: request rate 0.68/s (baseline 0.11/s) for currency",
+      "obs-1: request rate 2.50/s (baseline 0.45/s) for image-provider",
+      "obs-1: request rate 0.55/s (baseline 0.11/s) for recommendation",
+      "obs-2: errored_traces 0 for frontend",
+      "obs-3: not_running [] (all containers healthy)",
+      "obs-4: recent container starts for recommendation and product-catalog"
+    ],
+    "dropped_ungrounded_evidence": [],
+    "secondary_findings": [
+      "product-catalog: container restarted 1x (no OOM)"
+    ],
+    "suggested_remedy": "throttle a load generator",
+    "escalate_to_human": false
+  },
+  "action_plan": {
+    "allowed": true,
+    "escalate": false,
+    "incident_id": "inc-1792820433",
+    "proposal_version": 2,
+    "round": 2,
+    "action_type": "toggle_feature_flag",
+    "target": "product-catalog",
+    "parameters": {
+      "flag_name": "productCatalogFailure",
+      "variant": "off",
+      "service": "product-catalog"
+    },
+    "reason": "The product-catalog container restarted recently and its logs show repeated exporter timeout errors, indicating internal failures that are causing the high latency.",
+    "rollback": {
+      "reversible": true,
+      "description": "Restore 'productCatalogFailure' to its previous variant if verification fails."
+    },
+    "policy_note": "Runbook override: agent suggested restart_service, policy chose toggle_feature_flag for (product-catalog, app_error).",
+    "approval_digest": "7ed307610321beec20b96cadd9b49fbf9d1ae9364cd70346483efdb6093356d7"
+  },
+  "human_approval": {
+    "approved": true,
+    "dry_run": false,
+    "decided_at": "2026-10-24T05:48:03Z",
+    "decided_epoch": 1792820883.4250932,
+    "approval_digest": "7ed307610321beec20b96cadd9b49fbf9d1ae9364cd70346483efdb6093356d7",
+    "consumed": true,
+    "operator_input": "yes",
+    "approver": "ui-operator"
+  },
+  "execution": {
+    "executed": true,
+    "status": "success",
+    "action_type": "toggle_feature_flag",
+    "previous_variant": "off",
+    "detail": "Set productCatalogFailure -> off (was off)"
+  },
+  "verification": {
+    "verified": false,
+    "status": "aborted_kill_switch",
+    "checks": [],
+    "rollback": {
+      "rolled_back": false,
+      "reason": "Kill switch is ON; no further changes."
+    }
+  },
+  "rounds": [
+    {
+      "round": 1,
+      "alert": "Detector opened an incident. Symptoms: product-catalog: container product-catalog restarted 1x (OOM killed: False); currency: request rate 0.68/s (baseline 0.11/s); image-provider: request rate 2.50/s (baseline 0.45/s); recommendation: request rate 0.55/s (baseline 0.11/s); kafka: container kafka under pressure: cpu 3.03%, memory 95.74% of limit",
+      "diagnosis": {
+        "fault_class": "traffic_flood",
+        "failing_component": "frontend",
+        "cause": "A sudden increase in request rates to multiple services (currency, image-provider, recommendation) indicates a traffic surge, likely from the load generator.",
+        "confidence": "medium",
+        "evidence": [
+          "obs-1: request rate 0.68/s (baseline 0.11/s) for currency",
+          "obs-1: request rate 2.50/s (baseline 0.45/s) for image-provider",
+          "obs-1: request rate 0.55/s (baseline 0.11/s) for recommendation",
+          "obs-2: errored_traces 0 for frontend",
+          "obs-3: not_running [] (all containers healthy)",
+          "obs-4: recent container starts for recommendation and product-catalog"
+        ],
+        "dropped_ungrounded_evidence": [],
+        "secondary_findings": [
+          "product-catalog: container restarted 1x (no OOM)"
+        ],
+        "suggested_remedy": "throttle a load generator",
+        "escalate_to_human": false
+      },
+      "action_plan": {
+        "allowed": true,
+        "escalate": false,
+        "incident_id": "inc-1792820433",
+        "proposal_version": 1,
+        "round": 1,
+        "action_type": "throttle_load_generator",
+        "target": "frontend",
+        "parameters": {
+          "user_count": 5,
+          "spawn_rate": 1
+        },
+        "reason": "A sudden increase in request rates to multiple services (currency, image-provider, recommendation) indicates a traffic surge, likely from the load generator.",
+        "rollback": {
+          "reversible": true,
+          "description": "Restore the previous Locust user count."
+        },
+        "policy_note": null,
+        "approval_digest": "634cf4e07e843138537141b1028ee858474a667f8d7eb37c2bc110d65590ac9f"
+      },
+      "human_approval": {
+        "approved": true,
+        "dry_run": false,
+        "decided_at": "2026-10-24T05:42:02Z",
+        "decided_epoch": 1792820522.5865364,
+        "approval_digest": "634cf4e07e843138537141b1028ee858474a667f8d7eb37c2bc110d65590ac9f",
+        "consumed": true,
+        "operator_input": "yes",
+        "approver": "ui-operator"
+      },
+      "execution": {
+        "executed": true,
+        "status": "success",
+        "action_type": "throttle_load_generator",
+        "previous_user_count": 5,
+        "detail": "Throttled load generator to 5 users (was 5)"
+      },
+      "verification": {
+        "verified": true,
+        "target_recovered": true,
+        "status": "Resolved",
+        "target_service": "frontend",
+        "watched_services": [
+          "frontend",
+          "frontend-proxy"
+        ],
+        "passing_samples": 2,
+        "required_samples": 2,
+        "checks": [
+          {
+            "sample": 1,
+            "timestamp": "2026-10-24T05:43:18Z",
+            "passed": true,
+            "target_ok": true,
+            "blind": [],
+            "remaining_anomalies": [],
+            "not_running": [],
+            "still_cpu_capped": [],
+            "stopped_dependencies": [],
+            "no_traffic_seen": false,
+            "other_anomalies": []
+          },
+          {
+            "sample": 2,
+            "timestamp": "2026-10-24T05:43:39Z",
+            "passed": true,
+            "target_ok": true,
+            "blind": [],
+            "remaining_anomalies": [],
+            "not_running": [],
+            "still_cpu_capped": [],
+            "stopped_dependencies": [],
+            "no_traffic_seen": false,
+            "other_anomalies": []
+          }
+        ]
+      },
+      "observations": [
+        {
+          "id": "obs-1",
+          "timestamp": "2026-10-24T05:40:36Z",
+          "tool": "triage",
+          "args": {
+            "window_min": 5
+          },
+          "finding": "3 anomalies: currency request rate 0.68/s (baseline 0.11/s); image-provider request rate 2.50/s (baseline 0.45/s)",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-1\", \"window_min\": 5, \"baseline_offsets_min\": [15, 45], \"anomalies\": [{\"type\": \"traffic_surge\", \"service\": \"currency\", \"score\": 62.7, \"detail\": \"request rate 0.68/s (baseline 0.11/s)\"}, {\"type\": \"traffic_surge\", \"service\": \"image-provider\", \"score\": 56.0, \"detail\": \"request rate 2.50/s (baseline 0.45/s)\"}, {\"type\": \"traffic_surge\", \"service\": \"recommendation\", \"score\": 51.6, \"detail\": \"request rate 0.56/s (baseline 0.11/s)\"}], \"service_rates\": {\"currency\": 0.6792, \"image-provider\": 2",
+          "round": 1
+        },
+        {
+          "id": "obs-2",
+          "timestamp": "2026-10-24T05:41:09Z",
+          "tool": "error_hotspots",
+          "args": {
+            "minutes": 15,
+            "service": "frontend"
+          },
+          "finding": "0/30 traces errored; no root errors",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-2\", \"service_queried\": \"frontend\", \"window_min\": 15, \"traces_checked\": 30, \"errored_traces\": 0, \"root_error_hotspots\": []}",
+          "round": 1
+        },
+        {
+          "id": "obs-3",
+          "timestamp": "2026-10-24T05:41:10Z",
+          "tool": "container_health",
+          "args": {},
+          "finding": "23 running, hot ['ad cpu 1.1% mem 79.44%', 'astronomy-db cpu 1.22% mem 71.4%']",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-3\", \"total\": 23, \"running\": [\"accounting\", \"ad\", \"astronomy-db\", \"cart\", \"checkout\", \"currency\", \"email\", \"fraud-detection\", \"frontend\", \"frontend-proxy\", \"image-provider\", \"jaeger\", \"kafka\", \"load-generator\", \"opamp-server\", \"otel-collector\", \"payment\", \"product-catalog\", \"prometheus\", \"quote\", \"recommendation\", \"shipping\", \"valkey-cart\"], \"not_running\": [], \"restarts_or_oom\": [{\"service\": \"product-catalog\", \"restarts\": 1, \"oom_killed\": false, \"last_start_min_ago\": 5.8}], \"hot\": [{",
+          "round": 1
+        },
+        {
+          "id": "obs-4",
+          "timestamp": "2026-10-24T05:41:11Z",
+          "tool": "deploy_history",
+          "args": {
+            "minutes": 60
+          },
+          "finding": "2 recent container changes: recommendation started 4.3m ago, product-catalog started 5.8m ago",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-4\", \"window_min\": 60, \"container_changes\": [{\"service\": \"recommendation\", \"event\": \"started\", \"minutes_ago\": 4.3, \"image\": \"demo:latest-recommendation\"}, {\"service\": \"product-catalog\", \"event\": \"started\", \"minutes_ago\": 5.8, \"image\": \"demo:latest-product-catalog\"}], \"recent_agent_actions\": [], \"note\": \"a change shortly before the symptoms began is a suspect; no change is normal\"}",
+          "round": 1
+        }
+      ]
+    },
+    {
+      "round": 2,
+      "alert": "Detector opened an incident. Symptoms: product-catalog: container product-catalog restarted 1x (OOM killed: False); product-catalog: p95 15000ms; kafka: container kafka under pressure: cpu 3.0%, memory 95.62% of limit",
+      "diagnosis": {
+        "fault_class": "app_error",
+        "failing_component": "product-catalog",
+        "cause": "The product-catalog container restarted recently and its logs show repeated exporter timeout errors, indicating internal failures that are causing the high latency.",
+        "confidence": "high",
+        "evidence": [
+          "obs-1: p95 15000ms for product-catalog",
+          "obs-7: exporter export timeout: rpc error: code = DeadlineExceeded desc = context deadline exceeded",
+          "obs-8: product-catalog started 11.9 minutes ago (recent restart)",
+          "obs-3: product-catalog is running, not in not_running"
+        ],
+        "dropped_ungrounded_evidence": [],
+        "secondary_findings": [
+          "kafka: cpu pressure (3.0%) and memory 95.6% of limit"
+        ],
+        "suggested_remedy": "restart a service",
+        "escalate_to_human": false
+      },
+      "action_plan": {
+        "allowed": true,
+        "escalate": false,
+        "incident_id": "inc-1792820433",
+        "proposal_version": 2,
+        "round": 2,
+        "action_type": "toggle_feature_flag",
+        "target": "product-catalog",
+        "parameters": {
+          "flag_name": "productCatalogFailure",
+          "variant": "off",
+          "service": "product-catalog"
+        },
+        "reason": "The product-catalog container restarted recently and its logs show repeated exporter timeout errors, indicating internal failures that are causing the high latency.",
+        "rollback": {
+          "reversible": true,
+          "description": "Restore 'productCatalogFailure' to its previous variant if verification fails."
+        },
+        "policy_note": "Runbook override: agent suggested restart_service, policy chose toggle_feature_flag for (product-catalog, app_error).",
+        "approval_digest": "7ed307610321beec20b96cadd9b49fbf9d1ae9364cd70346483efdb6093356d7"
+      },
+      "human_approval": {
+        "approved": true,
+        "dry_run": false,
+        "decided_at": "2026-10-24T05:48:03Z",
+        "decided_epoch": 1792820883.4250932,
+        "approval_digest": "7ed307610321beec20b96cadd9b49fbf9d1ae9364cd70346483efdb6093356d7",
+        "consumed": true,
+        "operator_input": "yes",
+        "approver": "ui-operator"
+      },
+      "execution": {
+        "executed": true,
+        "status": "success",
+        "action_type": "toggle_feature_flag",
+        "previous_variant": "off",
+        "detail": "Set productCatalogFailure -> off (was off)"
+      },
+      "verification": {
+        "verified": false,
+        "status": "aborted_kill_switch",
+        "checks": [],
+        "rollback": {
+          "rolled_back": false,
+          "reason": "Kill switch is ON; no further changes."
+        }
+      },
+      "observations": [
+        {
+          "id": "obs-1",
+          "timestamp": "2026-10-24T05:44:57Z",
+          "tool": "triage",
+          "args": {
+            "window_min": 5
+          },
+          "finding": "4 anomalies: product-catalog p95 15000ms; shipping p95 1180ms",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-1\", \"window_min\": 5, \"baseline_offsets_min\": [15, 45], \"anomalies\": [{\"type\": \"latency\", \"service\": \"product-catalog\", \"score\": 100, \"detail\": \"p95 15000ms\"}, {\"type\": \"latency\", \"service\": \"shipping\", \"score\": 100, \"detail\": \"p95 1180ms\"}, {\"type\": \"traffic_surge\", \"service\": \"currency\", \"score\": 36.8, \"detail\": \"request rate 0.38/s (baseline 0.10/s)\"}, {\"type\": \"traffic_surge\", \"service\": \"image-provider\", \"score\": 36.5, \"detail\": \"request rate 1.64/s (baseline 0.45/s)\"}], \"servic",
+          "round": 2
+        },
+        {
+          "id": "obs-2",
+          "timestamp": "2026-10-24T05:44:57Z",
+          "tool": "metric_trend",
+          "args": {
+            "metric": "memory",
+            "minutes": 60,
+            "service": "product-catalog"
+          },
+          "finding": "first 42.539 -> last 87.715 (x2.06, rising 0.53)",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-2\", \"query\": \"max by (container_name)(container_memory_percent_ratio{container_name=\\\"product-catalog\\\"})\", \"window_min\": 60, \"series\": [{\"series\": {\"container_name\": \"product-catalog\"}, \"first\": 42.539, \"last\": 87.715, \"min\": 12.129, \"max\": 98.457, \"change_ratio\": 2.06, \"monotonic_up_share\": 0.53}]}",
+          "round": 2
+        },
+        {
+          "id": "obs-3",
+          "timestamp": "2026-10-24T05:44:59Z",
+          "tool": "container_health",
+          "args": {},
+          "finding": "23 running, hot ['ad cpu 1.09% mem 79.57%', 'astronomy-db cpu 1.24% mem 72.32%']",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-3\", \"total\": 23, \"running\": [\"accounting\", \"ad\", \"astronomy-db\", \"cart\", \"checkout\", \"currency\", \"email\", \"fraud-detection\", \"frontend\", \"frontend-proxy\", \"image-provider\", \"jaeger\", \"kafka\", \"load-generator\", \"opamp-server\", \"otel-collector\", \"payment\", \"product-catalog\", \"prometheus\", \"quote\", \"recommendation\", \"shipping\", \"valkey-cart\"], \"not_running\": [], \"restarts_or_oom\": [{\"service\": \"product-catalog\", \"restarts\": 1, \"oom_killed\": false, \"last_start_min_ago\": 9.6}], \"hot\": [{",
+          "round": 2
+        },
+        {
+          "id": "obs-4",
+          "timestamp": "2026-10-24T05:45:43Z",
+          "tool": "error_hotspots",
+          "args": {
+            "minutes": 15,
+            "service": "shipping"
+          },
+          "finding": "1/30 traces errored; root: frontend-proxy router frontend egress ''",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-4\", \"service_queried\": \"shipping\", \"window_min\": 15, \"traces_checked\": 30, \"errored_traces\": 1, \"root_error_hotspots\": [{\"service\": \"frontend-proxy\", \"operation\": \"router frontend egress\", \"message\": \"\", \"count\": 1, \"example_traces\": [\"c137d8293dc306eecac74efc8654837e\"]}]}",
+          "round": 2
+        },
+        {
+          "id": "obs-5",
+          "timestamp": "2026-10-24T05:45:44Z",
+          "tool": "metric_trend",
+          "args": {
+            "metric": "cpu",
+            "minutes": 60,
+            "service": "product-catalog"
+          },
+          "finding": "first 79.606 -> last 2.086 (x0.03, rising 0.68)",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-5\", \"query\": \"max by (container_name)(container_cpu_utilization_ratio{container_name=\\\"product-catalog\\\"})\", \"window_min\": 60, \"series\": [{\"series\": {\"container_name\": \"product-catalog\"}, \"first\": 79.606, \"last\": 2.086, \"min\": 0.025, \"max\": 82.283, \"change_ratio\": 0.03, \"monotonic_up_share\": 0.68}]}",
+          "round": 2
+        },
+        {
+          "id": "obs-6",
+          "timestamp": "2026-10-24T05:45:45Z",
+          "tool": "edge_latency_gap",
+          "args": {
+            "minutes": 10
+          },
+          "finding": "widest gap: frontend-web -> frontend-proxy median 24.8ms",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-6\", \"window_min\": 10, \"edges\": [{\"caller\": \"frontend-web\", \"callee\": \"frontend-proxy\", \"samples\": 3, \"median_gap_ms\": 24.8, \"p95_gap_ms\": 25.8}, {\"caller\": \"frontend\", \"callee\": \"cart\", \"samples\": 5, \"median_gap_ms\": 2.2, \"p95_gap_ms\": 2.2}, {\"caller\": \"frontend-proxy\", \"callee\": \"frontend\", \"samples\": 46, \"median_gap_ms\": 0.5, \"p95_gap_ms\": 4.4}]}",
+          "round": 2
+        },
+        {
+          "id": "obs-7",
+          "timestamp": "2026-10-24T05:46:31Z",
+          "tool": "get_logs",
+          "args": {
+            "minutes": 10,
+            "service": "product-catalog"
+          },
+          "finding": "9 error lines in 9; top: '2026/10/24 05:42:19 exporter export timeout: rpc error: code = DeadlineExceeded desc = context deadline exceeded'",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-7\", \"service\": \"product-catalog\", \"window_min\": 10, \"lines\": 9, \"error_lines\": 9, \"top_patterns\": [{\"count\": 5, \"example\": \"2026/10/24 05:42:19 exporter export timeout: rpc error: code = DeadlineExceeded desc = context deadline exceeded\"}, {\"count\": 2, \"example\": \"2026/10/24 05:43:38 traces export: exporter export timeout: rpc error: code = DeadlineExceeded desc = context deadline exceeded\"}, {\"count\": 1, \"example\": \"2026/10/24 05:44:39 failed to upload metrics: exporter export time",
+          "round": 2
+        },
+        {
+          "id": "obs-8",
+          "timestamp": "2026-10-24T05:47:16Z",
+          "tool": "deploy_history",
+          "args": {
+            "minutes": 60
+          },
+          "finding": "2 recent container changes: recommendation started 10.4m ago, product-catalog started 11.9m ago",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-8\", \"window_min\": 60, \"container_changes\": [{\"service\": \"recommendation\", \"event\": \"started\", \"minutes_ago\": 10.4, \"image\": \"demo:latest-recommendation\"}, {\"service\": \"product-catalog\", \"event\": \"started\", \"minutes_ago\": 11.9, \"image\": \"demo:latest-product-catalog\"}], \"recent_agent_actions\": [{\"event\": \"action_executed\", \"action_type\": \"throttle_load_generator\", \"target\": \"frontend\", \"status\": \"success\", \"minutes_ago\": 5.2}], \"note\": \"a change shortly before the symptoms began is a ",
+          "round": 2
+        }
+      ]
+    }
+  ],
+  "prevention_recommendation": [
+    "Add rate limiting at the edge proxy to shed excess load gracefully.",
+    "Add canary checks and automatic rollback for faulty releases; alert on per-operation error rate."
+  ],
+  "observations": [
+    {
+      "id": "obs-1",
+      "timestamp": "2026-10-24T05:40:36Z",
+      "tool": "triage",
+      "args": {
+        "window_min": 5
+      },
+      "finding": "3 anomalies: currency request rate 0.68/s (baseline 0.11/s); image-provider request rate 2.50/s (baseline 0.45/s)",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-1\", \"window_min\": 5, \"baseline_offsets_min\": [15, 45], \"anomalies\": [{\"type\": \"traffic_surge\", \"service\": \"currency\", \"score\": 62.7, \"detail\": \"request rate 0.68/s (baseline 0.11/s)\"}, {\"type\": \"traffic_surge\", \"service\": \"image-provider\", \"score\": 56.0, \"detail\": \"request rate 2.50/s (baseline 0.45/s)\"}, {\"type\": \"traffic_surge\", \"service\": \"recommendation\", \"score\": 51.6, \"detail\": \"request rate 0.56/s (baseline 0.11/s)\"}], \"service_rates\": {\"currency\": 0.6792, \"image-provider\": 2",
+      "round": 1
+    },
+    {
+      "id": "obs-2",
+      "timestamp": "2026-10-24T05:41:09Z",
+      "tool": "error_hotspots",
+      "args": {
+        "minutes": 15,
+        "service": "frontend"
+      },
+      "finding": "0/30 traces errored; no root errors",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-2\", \"service_queried\": \"frontend\", \"window_min\": 15, \"traces_checked\": 30, \"errored_traces\": 0, \"root_error_hotspots\": []}",
+      "round": 1
+    },
+    {
+      "id": "obs-3",
+      "timestamp": "2026-10-24T05:41:10Z",
+      "tool": "container_health",
+      "args": {},
+      "finding": "23 running, hot ['ad cpu 1.1% mem 79.44%', 'astronomy-db cpu 1.22% mem 71.4%']",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-3\", \"total\": 23, \"running\": [\"accounting\", \"ad\", \"astronomy-db\", \"cart\", \"checkout\", \"currency\", \"email\", \"fraud-detection\", \"frontend\", \"frontend-proxy\", \"image-provider\", \"jaeger\", \"kafka\", \"load-generator\", \"opamp-server\", \"otel-collector\", \"payment\", \"product-catalog\", \"prometheus\", \"quote\", \"recommendation\", \"shipping\", \"valkey-cart\"], \"not_running\": [], \"restarts_or_oom\": [{\"service\": \"product-catalog\", \"restarts\": 1, \"oom_killed\": false, \"last_start_min_ago\": 5.8}], \"hot\": [{",
+      "round": 1
+    },
+    {
+      "id": "obs-4",
+      "timestamp": "2026-10-24T05:41:11Z",
+      "tool": "deploy_history",
+      "args": {
+        "minutes": 60
+      },
+      "finding": "2 recent container changes: recommendation started 4.3m ago, product-catalog started 5.8m ago",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-4\", \"window_min\": 60, \"container_changes\": [{\"service\": \"recommendation\", \"event\": \"started\", \"minutes_ago\": 4.3, \"image\": \"demo:latest-recommendation\"}, {\"service\": \"product-catalog\", \"event\": \"started\", \"minutes_ago\": 5.8, \"image\": \"demo:latest-product-catalog\"}], \"recent_agent_actions\": [], \"note\": \"a change shortly before the symptoms began is a suspect; no change is normal\"}",
+      "round": 1
+    },
+    {
+      "id": "obs-1",
+      "timestamp": "2026-10-24T05:44:57Z",
+      "tool": "triage",
+      "args": {
+        "window_min": 5
+      },
+      "finding": "4 anomalies: product-catalog p95 15000ms; shipping p95 1180ms",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-1\", \"window_min\": 5, \"baseline_offsets_min\": [15, 45], \"anomalies\": [{\"type\": \"latency\", \"service\": \"product-catalog\", \"score\": 100, \"detail\": \"p95 15000ms\"}, {\"type\": \"latency\", \"service\": \"shipping\", \"score\": 100, \"detail\": \"p95 1180ms\"}, {\"type\": \"traffic_surge\", \"service\": \"currency\", \"score\": 36.8, \"detail\": \"request rate 0.38/s (baseline 0.10/s)\"}, {\"type\": \"traffic_surge\", \"service\": \"image-provider\", \"score\": 36.5, \"detail\": \"request rate 1.64/s (baseline 0.45/s)\"}], \"servic",
+      "round": 2
+    },
+    {
+      "id": "obs-2",
+      "timestamp": "2026-10-24T05:44:57Z",
+      "tool": "metric_trend",
+      "args": {
+        "metric": "memory",
+        "minutes": 60,
+        "service": "product-catalog"
+      },
+      "finding": "first 42.539 -> last 87.715 (x2.06, rising 0.53)",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-2\", \"query\": \"max by (container_name)(container_memory_percent_ratio{container_name=\\\"product-catalog\\\"})\", \"window_min\": 60, \"series\": [{\"series\": {\"container_name\": \"product-catalog\"}, \"first\": 42.539, \"last\": 87.715, \"min\": 12.129, \"max\": 98.457, \"change_ratio\": 2.06, \"monotonic_up_share\": 0.53}]}",
+      "round": 2
+    },
+    {
+      "id": "obs-3",
+      "timestamp": "2026-10-24T05:44:59Z",
+      "tool": "container_health",
+      "args": {},
+      "finding": "23 running, hot ['ad cpu 1.09% mem 79.57%', 'astronomy-db cpu 1.24% mem 72.32%']",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-3\", \"total\": 23, \"running\": [\"accounting\", \"ad\", \"astronomy-db\", \"cart\", \"checkout\", \"currency\", \"email\", \"fraud-detection\", \"frontend\", \"frontend-proxy\", \"image-provider\", \"jaeger\", \"kafka\", \"load-generator\", \"opamp-server\", \"otel-collector\", \"payment\", \"product-catalog\", \"prometheus\", \"quote\", \"recommendation\", \"shipping\", \"valkey-cart\"], \"not_running\": [], \"restarts_or_oom\": [{\"service\": \"product-catalog\", \"restarts\": 1, \"oom_killed\": false, \"last_start_min_ago\": 9.6}], \"hot\": [{",
+      "round": 2
+    },
+    {
+      "id": "obs-4",
+      "timestamp": "2026-10-24T05:45:43Z",
+      "tool": "error_hotspots",
+      "args": {
+        "minutes": 15,
+        "service": "shipping"
+      },
+      "finding": "1/30 traces errored; root: frontend-proxy router frontend egress ''",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-4\", \"service_queried\": \"shipping\", \"window_min\": 15, \"traces_checked\": 30, \"errored_traces\": 1, \"root_error_hotspots\": [{\"service\": \"frontend-proxy\", \"operation\": \"router frontend egress\", \"message\": \"\", \"count\": 1, \"example_traces\": [\"c137d8293dc306eecac74efc8654837e\"]}]}",
+      "round": 2
+    },
+    {
+      "id": "obs-5",
+      "timestamp": "2026-10-24T05:45:44Z",
+      "tool": "metric_trend",
+      "args": {
+        "metric": "cpu",
+        "minutes": 60,
+        "service": "product-catalog"
+      },
+      "finding": "first 79.606 -> last 2.086 (x0.03, rising 0.68)",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-5\", \"query\": \"max by (container_name)(container_cpu_utilization_ratio{container_name=\\\"product-catalog\\\"})\", \"window_min\": 60, \"series\": [{\"series\": {\"container_name\": \"product-catalog\"}, \"first\": 79.606, \"last\": 2.086, \"min\": 0.025, \"max\": 82.283, \"change_ratio\": 0.03, \"monotonic_up_share\": 0.68}]}",
+      "round": 2
+    },
+    {
+      "id": "obs-6",
+      "timestamp": "2026-10-24T05:45:45Z",
+      "tool": "edge_latency_gap",
+      "args": {
+        "minutes": 10
+      },
+      "finding": "widest gap: frontend-web -> frontend-proxy median 24.8ms",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-6\", \"window_min\": 10, \"edges\": [{\"caller\": \"frontend-web\", \"callee\": \"frontend-proxy\", \"samples\": 3, \"median_gap_ms\": 24.8, \"p95_gap_ms\": 25.8}, {\"caller\": \"frontend\", \"callee\": \"cart\", \"samples\": 5, \"median_gap_ms\": 2.2, \"p95_gap_ms\": 2.2}, {\"caller\": \"frontend-proxy\", \"callee\": \"frontend\", \"samples\": 46, \"median_gap_ms\": 0.5, \"p95_gap_ms\": 4.4}]}",
+      "round": 2
+    },
+    {
+      "id": "obs-7",
+      "timestamp": "2026-10-24T05:46:31Z",
+      "tool": "get_logs",
+      "args": {
+        "minutes": 10,
+        "service": "product-catalog"
+      },
+      "finding": "9 error lines in 9; top: '2026/10/24 05:42:19 exporter export timeout: rpc error: code = DeadlineExceeded desc = context deadline exceeded'",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-7\", \"service\": \"product-catalog\", \"window_min\": 10, \"lines\": 9, \"error_lines\": 9, \"top_patterns\": [{\"count\": 5, \"example\": \"2026/10/24 05:42:19 exporter export timeout: rpc error: code = DeadlineExceeded desc = context deadline exceeded\"}, {\"count\": 2, \"example\": \"2026/10/24 05:43:38 traces export: exporter export timeout: rpc error: code = DeadlineExceeded desc = context deadline exceeded\"}, {\"count\": 1, \"example\": \"2026/10/24 05:44:39 failed to upload metrics: exporter export time",
+      "round": 2
+    },
+    {
+      "id": "obs-8",
+      "timestamp": "2026-10-24T05:47:16Z",
+      "tool": "deploy_history",
+      "args": {
+        "minutes": 60
+      },
+      "finding": "2 recent container changes: recommendation started 10.4m ago, product-catalog started 11.9m ago",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-8\", \"window_min\": 60, \"container_changes\": [{\"service\": \"recommendation\", \"event\": \"started\", \"minutes_ago\": 10.4, \"image\": \"demo:latest-recommendation\"}, {\"service\": \"product-catalog\", \"event\": \"started\", \"minutes_ago\": 11.9, \"image\": \"demo:latest-product-catalog\"}], \"recent_agent_actions\": [{\"event\": \"action_executed\", \"action_type\": \"throttle_load_generator\", \"target\": \"frontend\", \"status\": \"success\", \"minutes_ago\": 5.2}], \"note\": \"a change shortly before the symptoms began is a ",
+      "round": 2
+    }
+  ],
+  "llm_usage": [
+    {
+      "provider": "groq:openai/gpt-oss-120b",
+      "calls": 16,
+      "tokens": 39999,
+      "daily_quota_hit": false
+    }
+  ],
+  "remaining_symptoms": [
+    "product-catalog: p95 15000ms",
+    "product-catalog: container product-catalog restarted 1x (OOM killed: False)",
+    "kafka: container kafka under pressure: cpu 3.0%, memory 95.62% of limit"
+  ]
+}

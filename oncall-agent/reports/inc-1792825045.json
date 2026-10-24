@@ -1,0 +1,313 @@
+{
+  "incident_id": "inc-1792825045",
+  "status": "Failed_Escalated",
+  "alert": "Detector opened an incident. Symptoms: shipping: container shipping is exited (exit code 0); checkout: request rate 0.03/s (baseline 0.22/s); email: request rate 0.02/s (baseline 0.22/s)",
+  "timeline": {
+    "detected_at": "2026-10-24T06:57:25Z",
+    "completed_at": "2026-10-24T06:59:47Z",
+    "tool_calls_count": 7,
+    "rounds": 1
+  },
+  "diagnosis": {
+    "fault_class": "dependency_down",
+    "failing_component": "shipping",
+    "cause": "shipping is not running (container state), so checkout fails when it calls it. Original finding: checkout requests fail because DNS lookups for the shipping service are failing, preventing checkout from contacting shipping.",
+    "confidence": "high",
+    "evidence": [
+      "obs-2: root_error_hotspots includes checkout POST error \"dial tcp: lookup shipping on 127.0.0.11:53: server misbehaving\"",
+      "obs-1: request rate 0.03/s (baseline 0.22/s) for checkout and request rate 0.02/s (baseline 0.22/s) for email"
+    ],
+    "dropped_ungrounded_evidence": [],
+    "secondary_findings": [
+      "shipping: container_restart",
+      "Guard: retargeted from checkout to its stopped dependency shipping (container state)."
+    ],
+    "suggested_remedy": "restart a service",
+    "escalate_to_human": false,
+    "guard_triggered": "retargeted_to_stopped_dependency"
+  },
+  "action_plan": {
+    "allowed": true,
+    "escalate": false,
+    "incident_id": "inc-1792825045",
+    "proposal_version": 1,
+    "round": 1,
+    "action_type": "restart_service",
+    "target": "shipping",
+    "parameters": {
+      "service_name": "shipping",
+      "reset_limits": false
+    },
+    "reason": "shipping is not running (container state), so checkout fails when it calls it. Original finding: checkout requests fail because DNS lookups for the shipping service are failing, preventing checkout from contacting shipping.",
+    "rollback": {
+      "reversible": false,
+      "description": "A restart has no natural inverse; if verification fails, escalate to a human."
+    },
+    "policy_note": null,
+    "approval_digest": "fb882e414ed529ee479f37f1c4aa8fc04947337e0628d87b81ebfa4504518cb0"
+  },
+  "human_approval": {
+    "approved": true,
+    "dry_run": false,
+    "decided_at": "2026-10-24T06:59:47Z",
+    "decided_epoch": 1792825187.4516058,
+    "approval_digest": "fb882e414ed529ee479f37f1c4aa8fc04947337e0628d87b81ebfa4504518cb0",
+    "consumed": false,
+    "operator_input": "yes",
+    "approver": "ui-operator"
+  },
+  "execution": {
+    "executed": false,
+    "status": "circuit_breaker_open",
+    "detail": "3 actions already executed in the last hour; escalate."
+  },
+  "verification": null,
+  "rounds": [
+    {
+      "round": 1,
+      "alert": "Detector opened an incident. Symptoms: shipping: container shipping is exited (exit code 0); checkout: request rate 0.03/s (baseline 0.22/s); email: request rate 0.02/s (baseline 0.22/s)",
+      "diagnosis": {
+        "fault_class": "dependency_down",
+        "failing_component": "shipping",
+        "cause": "shipping is not running (container state), so checkout fails when it calls it. Original finding: checkout requests fail because DNS lookups for the shipping service are failing, preventing checkout from contacting shipping.",
+        "confidence": "high",
+        "evidence": [
+          "obs-2: root_error_hotspots includes checkout POST error \"dial tcp: lookup shipping on 127.0.0.11:53: server misbehaving\"",
+          "obs-1: request rate 0.03/s (baseline 0.22/s) for checkout and request rate 0.02/s (baseline 0.22/s) for email"
+        ],
+        "dropped_ungrounded_evidence": [],
+        "secondary_findings": [
+          "shipping: container_restart",
+          "Guard: retargeted from checkout to its stopped dependency shipping (container state)."
+        ],
+        "suggested_remedy": "restart a service",
+        "escalate_to_human": false,
+        "guard_triggered": "retargeted_to_stopped_dependency"
+      },
+      "action_plan": {
+        "allowed": true,
+        "escalate": false,
+        "incident_id": "inc-1792825045",
+        "proposal_version": 1,
+        "round": 1,
+        "action_type": "restart_service",
+        "target": "shipping",
+        "parameters": {
+          "service_name": "shipping",
+          "reset_limits": false
+        },
+        "reason": "shipping is not running (container state), so checkout fails when it calls it. Original finding: checkout requests fail because DNS lookups for the shipping service are failing, preventing checkout from contacting shipping.",
+        "rollback": {
+          "reversible": false,
+          "description": "A restart has no natural inverse; if verification fails, escalate to a human."
+        },
+        "policy_note": null,
+        "approval_digest": "fb882e414ed529ee479f37f1c4aa8fc04947337e0628d87b81ebfa4504518cb0"
+      },
+      "human_approval": {
+        "approved": true,
+        "dry_run": false,
+        "decided_at": "2026-10-24T06:59:47Z",
+        "decided_epoch": 1792825187.4516058,
+        "approval_digest": "fb882e414ed529ee479f37f1c4aa8fc04947337e0628d87b81ebfa4504518cb0",
+        "consumed": false,
+        "operator_input": "yes",
+        "approver": "ui-operator"
+      },
+      "execution": {
+        "executed": false,
+        "status": "circuit_breaker_open",
+        "detail": "3 actions already executed in the last hour; escalate."
+      },
+      "verification": null,
+      "observations": [
+        {
+          "id": "obs-1",
+          "timestamp": "2026-10-24T06:57:27Z",
+          "tool": "triage",
+          "args": {
+            "window_min": 5
+          },
+          "finding": "6 anomalies: checkout request rate 0.03/s (baseline 0.22/s); email request rate 0.02/s (baseline 0.22/s) | DOWN: shipping",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-1\", \"window_min\": 5, \"baseline_offsets_min\": [15, 45], \"anomalies\": [{\"type\": \"traffic_drop_or_service_gone\", \"service\": \"checkout\", \"score\": 90.0, \"detail\": \"request rate 0.03/s (baseline 0.22/s)\"}, {\"type\": \"traffic_drop_or_service_gone\", \"service\": \"email\", \"score\": 90.0, \"detail\": \"request rate 0.02/s (baseline 0.22/s)\"}, {\"type\": \"error_rate\", \"service\": \"checkout\", \"score\": 28.6, \"detail\": \"error rate 28.6% (baseline 0.0%)\"}, {\"type\": \"operation_error_rate\", \"service\": \"fronte",
+          "round": 1
+        },
+        {
+          "id": "obs-2",
+          "timestamp": "2026-10-24T06:57:28Z",
+          "tool": "error_hotspots",
+          "args": {
+            "minutes": 15,
+            "service": "checkout"
+          },
+          "finding": "2/29 traces errored; root: checkout POST 'dial tcp: lookup shipping on 127.0.0.11:53: server misbehav...'",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-2\", \"service_queried\": \"checkout\", \"window_min\": 15, \"traces_checked\": 29, \"errored_traces\": 2, \"root_error_hotspots\": [{\"service\": \"checkout\", \"operation\": \"POST\", \"message\": \"dial tcp: lookup shipping on 127.0.0.11:53: server misbehaving\", \"count\": 2, \"example_traces\": [\"16f78564ee60f9d83f6227bbb65081d8\", \"6ad169dcbe2f931dd61457752dac70f4\"]}]}",
+          "round": 1
+        },
+        {
+          "id": "obs-3",
+          "timestamp": "2026-10-24T06:57:30Z",
+          "tool": "get_logs",
+          "args": {
+            "minutes": 10,
+            "service": "checkout"
+          },
+          "finding": "0 error lines in 0",
+          "empty": true,
+          "output_preview": "{\"obs\": \"obs-3\", \"service\": \"checkout\", \"window_min\": 10, \"lines\": 0, \"error_lines\": 0, \"top_patterns\": [], \"evidence_note\": \"this result is empty or failed: it is not evidence of anything\"}",
+          "round": 1
+        },
+        {
+          "id": "obs-4",
+          "timestamp": "2026-10-24T06:58:02Z",
+          "tool": "deploy_history",
+          "args": {
+            "minutes": 60
+          },
+          "finding": "5 recent container changes: currency created 0.3m ago, currency started 0.3m ago, shipping started 0.3m ago",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-4\", \"window_min\": 60, \"container_changes\": [{\"service\": \"currency\", \"event\": \"created\", \"minutes_ago\": 0.3, \"image\": \"demo:latest-currency\"}, {\"service\": \"currency\", \"event\": \"started\", \"minutes_ago\": 0.3, \"image\": \"demo:latest-currency\"}, {\"service\": \"shipping\", \"event\": \"started\", \"minutes_ago\": 0.3, \"image\": \"demo:latest-shipping\"}, {\"service\": \"cart\", \"event\": \"created\", \"minutes_ago\": 18.6, \"image\": \"demo:latest-cart\"}, {\"service\": \"cart\", \"event\": \"started\", \"minutes_ago\": 18.",
+          "round": 1
+        },
+        {
+          "id": "obs-5",
+          "timestamp": "2026-10-24T06:58:03Z",
+          "tool": "container_health",
+          "args": {},
+          "finding": "23 running, hot ['accounting cpu 0.29% mem 87.1%', 'ad cpu 0.97% mem 73.27%']",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-5\", \"total\": 23, \"running\": [\"accounting\", \"ad\", \"astronomy-db\", \"cart\", \"checkout\", \"currency\", \"email\", \"fraud-detection\", \"frontend\", \"frontend-proxy\", \"image-provider\", \"jaeger\", \"kafka\", \"load-generator\", \"opamp-server\", \"otel-collector\", \"payment\", \"product-catalog\", \"prometheus\", \"quote\", \"recommendation\", \"shipping\", \"valkey-cart\"], \"not_running\": [], \"restarts_or_oom\": [], \"hot\": [{\"service\": \"accounting\", \"cpu_pct\": 0.29, \"mem_pct_of_limit\": 87.1}, {\"service\": \"ad\", \"cpu_p",
+          "round": 1
+        },
+        {
+          "id": "obs-6",
+          "timestamp": "2026-10-24T06:58:31Z",
+          "tool": "get_metrics",
+          "args": {
+            "metric": "request_rate",
+            "service": "shipping",
+            "window": "5m"
+          },
+          "finding": "request_rate ok; top: {\"service\": \"shipping\", \"calls_per_s\": 0.138}",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-6\", \"tool\": \"get_metrics\", \"metric\": \"request_rate\", \"window\": \"5m\", \"status\": \"ok\", \"rows\": [{\"service\": \"shipping\", \"calls_per_s\": 0.138}], \"queries\": [\"sum by (service_name) (rate(traces_span_metrics_calls_total{service_name!~\\\"flagd|flagd-ui\\\",span_name!~\\\".*(flagd|feature_flag|featureflag).*\\\",service_name=\\\"shipping\\\"}[5m]))\"]}",
+          "round": 1
+        },
+        {
+          "id": "obs-7",
+          "timestamp": "2026-10-24T06:58:55Z",
+          "tool": "edge_latency_gap",
+          "args": {
+            "minutes": 10
+          },
+          "finding": "widest gap: frontend-web -> frontend-proxy median 11.6ms",
+          "empty": false,
+          "output_preview": "{\"obs\": \"obs-7\", \"window_min\": 10, \"edges\": [{\"caller\": \"frontend-web\", \"callee\": \"frontend-proxy\", \"samples\": 11, \"median_gap_ms\": 11.6, \"p95_gap_ms\": 22.3}, {\"caller\": \"shipping\", \"callee\": \"quote\", \"samples\": 3, \"median_gap_ms\": 4.9, \"p95_gap_ms\": 13.0}, {\"caller\": \"frontend\", \"callee\": \"product-catalog\", \"samples\": 28, \"median_gap_ms\": 1.7, \"p95_gap_ms\": 2.8}, {\"caller\": \"load-generator\", \"callee\": \"frontend-proxy\", \"samples\": 10, \"median_gap_ms\": 1.2, \"p95_gap_ms\": 1.5}, {\"caller\": \"recomme",
+          "round": 1
+        }
+      ]
+    }
+  ],
+  "prevention_recommendation": [
+    "Set restart policies, readiness probes and circuit breakers with fallbacks for critical dependencies."
+  ],
+  "observations": [
+    {
+      "id": "obs-1",
+      "timestamp": "2026-10-24T06:57:27Z",
+      "tool": "triage",
+      "args": {
+        "window_min": 5
+      },
+      "finding": "6 anomalies: checkout request rate 0.03/s (baseline 0.22/s); email request rate 0.02/s (baseline 0.22/s) | DOWN: shipping",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-1\", \"window_min\": 5, \"baseline_offsets_min\": [15, 45], \"anomalies\": [{\"type\": \"traffic_drop_or_service_gone\", \"service\": \"checkout\", \"score\": 90.0, \"detail\": \"request rate 0.03/s (baseline 0.22/s)\"}, {\"type\": \"traffic_drop_or_service_gone\", \"service\": \"email\", \"score\": 90.0, \"detail\": \"request rate 0.02/s (baseline 0.22/s)\"}, {\"type\": \"error_rate\", \"service\": \"checkout\", \"score\": 28.6, \"detail\": \"error rate 28.6% (baseline 0.0%)\"}, {\"type\": \"operation_error_rate\", \"service\": \"fronte",
+      "round": 1
+    },
+    {
+      "id": "obs-2",
+      "timestamp": "2026-10-24T06:57:28Z",
+      "tool": "error_hotspots",
+      "args": {
+        "minutes": 15,
+        "service": "checkout"
+      },
+      "finding": "2/29 traces errored; root: checkout POST 'dial tcp: lookup shipping on 127.0.0.11:53: server misbehav...'",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-2\", \"service_queried\": \"checkout\", \"window_min\": 15, \"traces_checked\": 29, \"errored_traces\": 2, \"root_error_hotspots\": [{\"service\": \"checkout\", \"operation\": \"POST\", \"message\": \"dial tcp: lookup shipping on 127.0.0.11:53: server misbehaving\", \"count\": 2, \"example_traces\": [\"16f78564ee60f9d83f6227bbb65081d8\", \"6ad169dcbe2f931dd61457752dac70f4\"]}]}",
+      "round": 1
+    },
+    {
+      "id": "obs-3",
+      "timestamp": "2026-10-24T06:57:30Z",
+      "tool": "get_logs",
+      "args": {
+        "minutes": 10,
+        "service": "checkout"
+      },
+      "finding": "0 error lines in 0",
+      "empty": true,
+      "output_preview": "{\"obs\": \"obs-3\", \"service\": \"checkout\", \"window_min\": 10, \"lines\": 0, \"error_lines\": 0, \"top_patterns\": [], \"evidence_note\": \"this result is empty or failed: it is not evidence of anything\"}",
+      "round": 1
+    },
+    {
+      "id": "obs-4",
+      "timestamp": "2026-10-24T06:58:02Z",
+      "tool": "deploy_history",
+      "args": {
+        "minutes": 60
+      },
+      "finding": "5 recent container changes: currency created 0.3m ago, currency started 0.3m ago, shipping started 0.3m ago",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-4\", \"window_min\": 60, \"container_changes\": [{\"service\": \"currency\", \"event\": \"created\", \"minutes_ago\": 0.3, \"image\": \"demo:latest-currency\"}, {\"service\": \"currency\", \"event\": \"started\", \"minutes_ago\": 0.3, \"image\": \"demo:latest-currency\"}, {\"service\": \"shipping\", \"event\": \"started\", \"minutes_ago\": 0.3, \"image\": \"demo:latest-shipping\"}, {\"service\": \"cart\", \"event\": \"created\", \"minutes_ago\": 18.6, \"image\": \"demo:latest-cart\"}, {\"service\": \"cart\", \"event\": \"started\", \"minutes_ago\": 18.",
+      "round": 1
+    },
+    {
+      "id": "obs-5",
+      "timestamp": "2026-10-24T06:58:03Z",
+      "tool": "container_health",
+      "args": {},
+      "finding": "23 running, hot ['accounting cpu 0.29% mem 87.1%', 'ad cpu 0.97% mem 73.27%']",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-5\", \"total\": 23, \"running\": [\"accounting\", \"ad\", \"astronomy-db\", \"cart\", \"checkout\", \"currency\", \"email\", \"fraud-detection\", \"frontend\", \"frontend-proxy\", \"image-provider\", \"jaeger\", \"kafka\", \"load-generator\", \"opamp-server\", \"otel-collector\", \"payment\", \"product-catalog\", \"prometheus\", \"quote\", \"recommendation\", \"shipping\", \"valkey-cart\"], \"not_running\": [], \"restarts_or_oom\": [], \"hot\": [{\"service\": \"accounting\", \"cpu_pct\": 0.29, \"mem_pct_of_limit\": 87.1}, {\"service\": \"ad\", \"cpu_p",
+      "round": 1
+    },
+    {
+      "id": "obs-6",
+      "timestamp": "2026-10-24T06:58:31Z",
+      "tool": "get_metrics",
+      "args": {
+        "metric": "request_rate",
+        "service": "shipping",
+        "window": "5m"
+      },
+      "finding": "request_rate ok; top: {\"service\": \"shipping\", \"calls_per_s\": 0.138}",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-6\", \"tool\": \"get_metrics\", \"metric\": \"request_rate\", \"window\": \"5m\", \"status\": \"ok\", \"rows\": [{\"service\": \"shipping\", \"calls_per_s\": 0.138}], \"queries\": [\"sum by (service_name) (rate(traces_span_metrics_calls_total{service_name!~\\\"flagd|flagd-ui\\\",span_name!~\\\".*(flagd|feature_flag|featureflag).*\\\",service_name=\\\"shipping\\\"}[5m]))\"]}",
+      "round": 1
+    },
+    {
+      "id": "obs-7",
+      "timestamp": "2026-10-24T06:58:55Z",
+      "tool": "edge_latency_gap",
+      "args": {
+        "minutes": 10
+      },
+      "finding": "widest gap: frontend-web -> frontend-proxy median 11.6ms",
+      "empty": false,
+      "output_preview": "{\"obs\": \"obs-7\", \"window_min\": 10, \"edges\": [{\"caller\": \"frontend-web\", \"callee\": \"frontend-proxy\", \"samples\": 11, \"median_gap_ms\": 11.6, \"p95_gap_ms\": 22.3}, {\"caller\": \"shipping\", \"callee\": \"quote\", \"samples\": 3, \"median_gap_ms\": 4.9, \"p95_gap_ms\": 13.0}, {\"caller\": \"frontend\", \"callee\": \"product-catalog\", \"samples\": 28, \"median_gap_ms\": 1.7, \"p95_gap_ms\": 2.8}, {\"caller\": \"load-generator\", \"callee\": \"frontend-proxy\", \"samples\": 10, \"median_gap_ms\": 1.2, \"p95_gap_ms\": 1.5}, {\"caller\": \"recomme",
+      "round": 1
+    }
+  ],
+  "llm_usage": [
+    {
+      "provider": "groq:openai/gpt-oss-120b",
+      "calls": 9,
+      "tokens": 23907,
+      "daily_quota_hit": false
+    }
+  ],
+  "remaining_symptoms": []
+}
