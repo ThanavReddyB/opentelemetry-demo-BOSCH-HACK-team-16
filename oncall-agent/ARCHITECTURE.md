@@ -2,7 +2,7 @@
 
 ## Overview
 
-The AI On-Call Engineer is a 7-step autonomous incident response agent built from scratch in plain Python (no agent frameworks). It monitors the OpenTelemetry Astronomy Shop (a ~20-microservice e-commerce demo), detects faults from telemetry, diagnoses root causes using an LLM, proposes fixes through a deterministic policy layer, and executes them only after human approval.
+The AI On-Call Engineer is a 7-step autonomous incident response agent built from scratch in plain Python (no agent frameworks). It monitors the OpenTelemetry Astronomy Shop (a ~20-microservice e-commerce demo), detects faults from telemetry, diagnoses root causes using an LLM, proposes fixes by mapping suggestions to deterministic policy layer, and executes them only after human approval.
 
 **Core design principle**: the LLM only proposes — deterministic code decides.
 
